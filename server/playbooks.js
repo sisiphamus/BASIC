@@ -39,7 +39,14 @@ const PlaybookSchema = z.object({
 
 function describeZod(err) {
   return err.issues
-    .map((i) => `${i.path.length ? i.path.join('.') : 'playbook'}: ${i.message}`)
+    .map((i) => {
+      const where = i.path.length ? i.path.join('.') : 'playbook';
+      let msg = i.message;
+      if (i.code === 'too_small' && i.origin === 'string') msg = "can't be empty";
+      else if (i.code === 'invalid_type' && /received undefined/.test(i.message)) msg = 'is missing';
+      else if (i.code === 'invalid_type') msg = `should be ${i.expected === 'array' ? 'a list' : i.expected === 'object' ? 'a section' : `a ${i.expected}`}`;
+      return `${where}: ${msg}`;
+    })
     .join('; ');
 }
 

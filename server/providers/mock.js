@@ -60,6 +60,9 @@ export class MockProvider {
     const n = (this.counters.get(key) || 0) + 1;
     this.counters.set(key, n);
     const seen = WALK[stepId] || { pass: 'Everything the check asks for is in the picture.', fail: 'Not quite there yet.' };
+    // On step 3's first look, trip the first watch rule so rehearsals show the safety callout too.
+    const firstRule = (input.user.match(/WATCH RULES:\n- id="([^"]+)"/) || [])[1];
+    if (n === 1 && stepNo === 3 && firstRule) return { scene: 'Hands near the connector.', step: { id: stepId, status: 'unclear', evidence: 'Not in frame yet.', confidence: 0.4, coach_line: 'Bring it closer.' }, rules: [{ id: firstRule, evidence: 'Bare hand on the plug.', line: '' }] };
     if (n === 1) return { scene: 'Tech is lining up the next shot.', step: { id: stepId, status: 'unclear', evidence: 'Not in frame yet.', confidence: 0.4, coach_line: 'Bring it closer.' }, rules: [] };
     if (stepNo === 1 && n === 2) return { scene: seen.scene || 'Close view of the work area.', step: { id: stepId, status: 'fail', evidence: seen.fail, confidence: 0.86, coach_line: 'Fix that and show me again.' }, rules: [] };
     return { scene: seen.scene || 'Close view of the work area.', step: { id: stepId, status: 'pass', evidence: seen.pass, confidence: 0.9, coach_line: '' }, rules: [] };

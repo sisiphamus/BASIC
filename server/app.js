@@ -49,7 +49,14 @@ export function createApp({ service, playbooks, provider, hub, staticDir, info =
   app.get('/api/sessions/:id/events', wrap((req) => {
     service.must(req.params.id);
     const since = Number(req.query.since) || 0;
-    return { events: service.store.eventsFor(req.params.id, since) };
+    let events = service.store.eventsFor(req.params.id, since);
+    if (typeof req.query.types === 'string' && req.query.types) {
+      const types = new Set(req.query.types.split(','));
+      events = events.filter((e) => types.has(e.type));
+    }
+    const tail = Number(req.query.tail);
+    if (Number.isInteger(tail) && tail > 0) events = events.slice(-tail);
+    return { events };
   }));
   app.post('/api/sessions/:id/end', wrap((req) => service.endSession(req.params.id)));
   app.post('/api/sessions/:id/commands', wrap((req) => service.command(req.params.id, req.body?.command, req.body?.by === 'supervisor' ? 'supervisor' : 'crew')));

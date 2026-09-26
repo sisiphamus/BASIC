@@ -366,3 +366,26 @@ test('large JSON frame uploads are accepted (not cut off by the small JSON limit
   assert.equal(up.status, 200);
   await srv.service.idle(s.id);
 });
+
+test('events can be fetched as a filtered tail (dashboard backfill)', async () => {
+  const s = await newSession();
+  for (let i = 0; i < 3; i++) {
+    mock.enqueue(r('unclear', 0.2));
+    await api('POST', `/api/sessions/${s.id}/frames`, JPEG);
+    await srv.service.idle(s.id);
+  }
+  const tail = (await api('GET', `/api/sessions/${s.id}/events?tail=2`)).body.events;
+  assert.equal(tail.length, 2);
+  const frames = (await api('GET', `/api/sessions/${s.id}/events?types=frame`)).body.events;
+  assert.equal(frames.length, 3);
+  assert.ok(frames.every((e) => e.type === 'frame'));
+  const d = (await api('GET', `/api/sessions/${s.id}`)).body;
+  assert.ok(d.lastFrameAt > Date.now() - 10_000);
+});
+
+test('playbook errors read like English', async () => {
+  const orig = (await api('GET', '/api/playbooks/system-check')).body.source;
+  const bad = await api('PUT', '/api/playbooks/system-check', { source: orig.replace(/title: Thumbs up/, 'title: ""') });
+  assert.equal(bad.status, 400);
+  assert.match(bad.body.error, /steps\.0\.title: can't be empty/);
+});

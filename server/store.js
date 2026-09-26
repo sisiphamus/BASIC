@@ -28,8 +28,11 @@ export class Store {
         const s = JSON.parse(fs.readFileSync(path.join(sdir, 'session.json'), 'utf8'));
         this.sessions.set(id, reviveSession(s));
         const evPath = path.join(sdir, 'events.jsonl');
-        const evs = fs.existsSync(evPath)
-          ? fs.readFileSync(evPath, 'utf8').split('\n').filter(Boolean).flatMap((l) => {
+        const rawLog = fs.existsSync(evPath) ? fs.readFileSync(evPath, 'utf8') : '';
+        // a crash mid-write leaves a torn last line; close it off so the next event starts clean
+        if (rawLog && !rawLog.endsWith('\n')) fs.appendFileSync(evPath, '\n');
+        const evs = rawLog
+          ? rawLog.split('\n').filter(Boolean).flatMap((l) => {
               try {
                 return [JSON.parse(l)];
               } catch {
@@ -109,7 +112,7 @@ export class Store {
     return (this.events.get(id) || []).filter((e) => e.seq > since);
   }
 
-  saveFrame(id, buf) {
+  saveFrame(id, buf, keep = new Set()) {
     const seq = (this.frameSeq.get(id) || 0) + 1;
     this.frameSeq.set(id, seq);
     const frameId = `${String(seq).padStart(6, '0')}`;
@@ -117,7 +120,9 @@ export class Store {
     const list = this.frameList.get(id);
     list.push(frameId);
     while (list.length > this.maxFrames) {
-      const old = list.shift();
+      const i = list.findIndex((f) => !keep.has(f));
+      if (i === -1) break;
+      const [old] = list.splice(i, 1);
       fs.rmSync(path.join(this.sessionDir(id), 'frames', `${old}.jpg`), { force: true });
     }
     return frameId;

@@ -90,6 +90,7 @@ export class Service {
       rules: s.rules,
       frames: frames.length,
       lastFrameId: frames[frames.length - 1] || null,
+      lastFrameAt: s.lastFrameAt || null,
       lastScene: s.lastScene,
       analyses: s.analyses,
       modelErrors: s.modelErrors,
@@ -189,9 +190,12 @@ export class Service {
     const mime = sniffImage(buf);
     if (!mime) throw new HttpError(415, 'frame must be a JPEG, PNG or WebP image');
     if (s.status !== 'active') return { frameId: null, analyzing: false, reason: `session is ${s.status}` };
-    const frameId = this.store.saveFrame(id, buf);
+    // evidence pictures on the checklist are never pruned
+    const keep = new Set(s.steps.map((st) => st.frameId).filter(Boolean));
+    const frameId = this.store.saveFrame(id, buf, keep);
     s.frames += 1;
     s.updatedAt = Date.now();
+    s.lastFrameAt = s.updatedAt;
     const ev = this.store.appendEvent(id, { type: 'frame', frameId, bytes: buf.length });
     this.hub?.publish(id, { type: 'frame', sessionId: id, frameId, ts: ev.ts });
     const r = this.rt(id);

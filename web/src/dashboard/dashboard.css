@@ -1,0 +1,159 @@
+@import "../theme.css";
+
+/* Dashboard-only pieces. Tokens come from theme.css. */
+
+body {
+  background: var(--color-canvas);
+  min-height: 100%;
+}
+
+/* Buttons: one primary (hi-vis, like the label on the equipment), the rest are ink outlines. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: 6px;
+  background: var(--color-panel);
+  color: var(--color-ink);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out-quint), border-color 120ms var(--ease-out-quint);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--color-ink);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  color: var(--color-ink-3);
+  background: var(--color-canvas);
+  border-color: var(--color-line);
+}
+.btn-primary {
+  background: var(--color-hivis);
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-hivis-deep);
+}
+.btn-danger {
+  color: var(--color-fail);
+}
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--color-fail);
+  background: var(--color-fail-soft);
+}
+.btn-sm {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+}
+.btn-busy {
+  cursor: progress;
+}
+
+.link {
+  text-decoration: underline;
+  text-decoration-color: var(--color-line-2);
+  text-underline-offset: 3px;
+}
+.link:hover {
+  text-decoration-color: var(--color-ink);
+}
+
+.field {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: 6px;
+  background: var(--color-panel);
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+}
+.field::placeholder {
+  color: var(--color-ink-3);
+}
+.field:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 0;
+  border-color: var(--color-ink);
+}
+.field[aria-invalid="true"] {
+  border-color: var(--color-fail);
+}
+
+/* Step track segments */
+.seg-pass { background: var(--color-pass); }
+.seg-active { background: var(--color-ink); }
+.seg-fail { background: var(--color-fail); }
+.seg-pending { background: var(--color-line); }
+.seg-skipped {
+  background: repeating-linear-gradient(-45deg, var(--color-line-2) 0 3px, var(--color-panel) 3px 6px);
+  box-shadow: inset 0 0 0 1px var(--color-line-2);
+}
+
+/* The "needs you" tag borrows the ANSI Z535 label: a signal-word header on hi-vis. */
+.tag-signal {
+  background: var(--color-hivis);
+  color: var(--color-ink);
+}
+.tag-fail {
+  background: var(--color-fail);
+  color: white;
+}
+
+.frame-img {
+  transition: opacity 180ms var(--ease-out-quint);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-line) 0%, var(--color-canvas) 50%, var(--color-line) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+.spin {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.scroll-x {
+  scrollbar-width: thin;
+}
+
+/* YAML editor: textarea over a line-number gutter, both scroll together. */
+.code {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 20px;
+  tab-size: 2;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body, html { background: white; }
+  .print-avoid-break { break-inside: avoid; }
+  @page { margin: 14mm; }
+}
