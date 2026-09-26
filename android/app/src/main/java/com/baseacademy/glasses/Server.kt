@@ -15,7 +15,7 @@ import org.json.JSONObject
 
 class ServerError(val code: Int, message: String) : IOException(message)
 
-/** Talks to the Base Academy server: the same API the web glasses page uses. */
+/** Talks to the BASIC server: the same API the web glasses page uses. */
 object Server {
   private val http =
       OkHttpClient.Builder()

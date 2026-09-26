@@ -66,7 +66,7 @@ class GlassesService : Service() {
             PendingIntent.FLAG_IMMUTABLE,
         )
     return Notification.Builder(this, CHANNEL)
-        .setContentTitle("Base Academy is watching")
+        .setContentTitle("BASIC is watching")
         .setContentText("Taking a picture from your glasses every ${Settings.intervalMs / 1000.0} s")
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setOngoing(true)

@@ -175,7 +175,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
       Modifier.fillMaxSize().background(Color(0xFFF7F8FA)).safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(14.dp),
   ) {
-    Text("Base Academy", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = Ink)
+    Text("BASIC", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = Ink)
 
     if (status.running) {
       Live(status)

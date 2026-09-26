@@ -1,4 +1,4 @@
-# Base Academy
+# BASIC
 
 AI coaching through Meta glasses for Base Power field crews, plus a dashboard where one master electrician watches every crew at once.
 
@@ -64,7 +64,7 @@ No key at all? The server runs a built-in walkthrough model that fakes believabl
    JAVA_HOME=~/Android/jdk-17.0.20.1+1 ./gradlew assembleDebug
    ~/Android/sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk
    ```
-3. Open **Base Academy** on the phone. Enter your name and the server address, then tap **Connect glasses (one time)**. That hops to Meta AI to approve and comes back. Then tap **Start**, and **Allow glasses camera** if it asks.
+3. Open **BASIC** on the phone. Enter your name and the server address, then tap **Connect glasses (one time)**. That hops to Meta AI to approve and comes back. Then tap **Start**, and **Allow glasses camera** if it asks.
 
 **How the voice reaches the glasses.** While the glasses camera is streaming, the glasses mute normal media audio (Meta DAT issue #78). So by default the app speaks over the Bluetooth **call** channel, which keeps working during the stream. Tested on a Galaxy S24 with Ray-Ban Meta: clear, and a check every ~4 s. If you can't hear anything on another phone, turn off "Talk over phone-call audio": the app then stops the camera while it speaks and restarts it after, which works everywhere but adds several seconds per spoken line. Photos taken during a stream come back at 1080×1440 (measured: ~220 KB, ~1.3 s per capture). The app shows the real size and timing on screen, and **Pause** turns the camera off until you resume.
 

@@ -41,7 +41,7 @@ export default function Shell() {
       <header className="no-print sticky top-0 z-20 border-b border-line bg-panel/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-6 px-4 sm:gap-8 sm:px-6">
           <NavLink to="/" className="font-display text-[1.375rem] font-bold uppercase leading-none tracking-[0.02em]">
-            Base Academy
+            BASIC
           </NavLink>
           <nav className="flex h-full items-stretch gap-5" aria-label="Main">
             <NavLink to="/" className={() => tab({ isActive: pathname === '/' || pathname.startsWith('/sessions') })}>

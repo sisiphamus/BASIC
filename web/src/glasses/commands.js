@@ -15,7 +15,7 @@ export function matchCommand(heard) {
     .replace(/[^a-z' ]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/^(?:hey |ok )?(?:base|academy|base academy)\s*/, '')
+    .replace(/^(?:hey |ok )?(?:base|academy|basic)\s*/, '')
     .replace(/ please$/, '');
   for (const [cmd, re] of PHRASES) if (re.test(t)) return cmd;
   return null;

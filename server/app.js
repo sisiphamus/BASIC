@@ -124,7 +124,7 @@ export function createApp({ service, playbooks, provider, hub, staticDir, info =
     app.get(['/glasses', '/glasses/*splat'], page('glasses.html'));
     app.get(['/', '/*splat'], page('index.html'));
   } else {
-    app.get('/', (req, res) => res.type('text').send('Base Academy server is running. Build the web app with `npm run build` to get the dashboard.'));
+    app.get('/', (req, res) => res.type('text').send('BASIC server is running. Build the web app with `npm run build` to get the dashboard.'));
   }
 
   return app;

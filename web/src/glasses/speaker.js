@@ -34,7 +34,7 @@ export class Speaker {
   }
 
   /** Must run inside a tap handler once, or iOS/Safari stays silent. */
-  unlock(text = 'Base Academy is ready.', { silent = false } = {}) {
+  unlock(text = 'BASIC is ready.', { silent = false } = {}) {
     if (!this.synth) return;
     this.synth.cancel();
     const u = new SpeechSynthesisUtterance(silent ? ' ' : text);

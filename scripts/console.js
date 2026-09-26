@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Base Academy live telemetry console.
+// BASIC live telemetry console.
 //   node scripts/console.js                     live, from http://localhost:3000
 //   node scripts/console.js --server http://localhost:3005
 //   node scripts/console.js --replay data/traces/<session>.jsonl [--speed 2]
@@ -63,7 +63,7 @@ const pct = (arr, p) => (arr.length ? [...arr].sort((a, b) => a - b)[Math.floor(
 function drawHeader() {
   const hz = st.firstFrameAt && st.frames > 1 ? (st.frames - 1) / ((st.lastFrameAt - st.firstFrameAt) / 1000) : 0;
   const dot = st.link === 'live' || st.link === 'replay' ? c.green + '●' : c.orange + '●';
-  const l1 = `${c.hivis}${c.bold}BASE ACADEMY${c.reset}  ${c.gray}perception telemetry  ${dot}${c.gray} ${st.link}   ${st.model}   RB Meta 0KD9 · DAT 1.0 · HFP${c.reset}`;
+  const l1 = `${c.hivis}${c.bold}BASIC${c.reset}  ${c.gray}perception telemetry  ${dot}${c.gray} ${st.link}   ${st.model}   RB Meta 0KD9 · DAT 1.0 · HFP${c.reset}`;
   const l2 = `${c.white}${st.job}${c.reset}   ${c.hivis}step ${st.stepNo}/${st.stepCount} ${st.step}${c.reset}`;
   const l3 = `${c.gray}frames ${c.white}${st.frames}${c.gray} · ${hz.toFixed(2)} Hz · ${(st.bytes / 1e6).toFixed(1)} MB   infer p50 ${c.white}${(pct(st.lat, 0.5) / 1000).toFixed(2)}s${c.gray} p95 ${c.white}${(pct(st.lat, 0.95) / 1000).toFixed(2)}s ${c.gray}${spark(st.lat)}   ${c.green}${st.pass}${c.gray}/${c.red}${st.fail}${c.gray}/${c.yellow}${st.unclear}${c.gray} verdicts   ${st.spoken} spoken   ${st.rules} rule hits${c.reset}`;
   const l4 = `${c.gray}${'─'.repeat(cols)}${c.reset}`;

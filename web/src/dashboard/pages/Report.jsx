@@ -18,8 +18,8 @@ export default function Report() {
   const { session: s, events, error, ready, reload } = useSession(id);
 
   useEffect(() => {
-    if (s) document.title = `${s.worker}, ${s.job?.customer || s.playbookTitle} · Base Academy`;
-    return () => void (document.title = 'Base Academy');
+    if (s) document.title = `${s.worker}, ${s.job?.customer || s.playbookTitle} · BASIC`;
+    return () => void (document.title = 'BASIC');
   }, [s]);
 
   if (!ready) return <div className="px-6"><Loading label="Building the record" /></div>;
@@ -50,7 +50,7 @@ export default function Report() {
       <article className="mx-auto max-w-[920px] [overflow-wrap:anywhere] bg-panel px-4 py-8 sm:my-6 sm:border sm:border-line sm:px-10 sm:py-10 print:m-0 print:border-0 print:p-0">
         <header className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-4">
           <div>
-            <p className="font-display text-lg font-bold uppercase tracking-[0.04em]">Base Academy</p>
+            <p className="font-display text-lg font-bold uppercase tracking-[0.04em]">BASIC</p>
             <h1 className="font-display text-[2.75rem] font-bold leading-none">{title}</h1>
             <p className="mt-1 text-ink-2">{s.playbookTitle}</p>
           </div>

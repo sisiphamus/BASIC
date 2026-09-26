@@ -1,4 +1,4 @@
-// Base Academy server: `npm start`
+// BASIC server: `npm start`
 // Serves the dashboard (http://localhost:3000) and the glasses page (https://<laptop-ip>:3443/glasses).
 
 import 'dotenv/config';
@@ -107,7 +107,7 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
   }
 
   const d = provider.describe();
-  log(`Base Academy running`);
+  log(`BASIC running`);
   log(`  dashboard:      ${urls.dashboard}`);
   for (const u of urls.glasses || []) log(`  glasses (phone): ${u}`);
   log(`  model:          ${d.provider}${d.provider === 'mock' ? ' (no GEMINI_API_KEY set, using the built-in walkthrough)' : ` ${d.model}`}`);

@@ -7,7 +7,7 @@ and correction is generated from what the camera sees.
 ## Setup
 
 - Server with Claude as the model: `MODEL_PROVIDER=claude-cli npm start` (dashboard on the laptop, projector).
-- Phone: Base Academy, job **Base battery install (visit 2)**, glasses paired, camera streaming. Pause until you're at the stack.
+- Phone: BASIC, job **Base battery install (visit 2)**, glasses paired, camera streaming. Pause until you're at the stack.
 - Props: the module stack, one side panel, the top panel. Everything else is on the phone:
   **Show serial label** (for the scan) and **Base installer app** (the commissioning screen, goes Connecting → Online).
 

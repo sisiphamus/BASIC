@@ -87,7 +87,7 @@ async function initSetup() {
     if (saved && playbooks.some((p) => p.id === saved)) sel.value = saved;
     if (!playbooks.length) formError('No jobs are set up on the server yet.');
   } catch (e) {
-    formError(`Can't reach the Base Academy server. ${e.message}`);
+    formError(`Can't reach the BASIC server. ${e.message}`);
   }
 
   // other cameras (e.g. a USB or virtual camera carrying the glasses feed)
@@ -311,7 +311,7 @@ function onSocket(msg) {
   }
 }
 
-const SOURCE_LABEL = { supervisor: 'Supervisor', rule: 'Heads up', hint: 'Tip', step: 'Coach', system: 'Base Academy' };
+const SOURCE_LABEL = { supervisor: 'Supervisor', rule: 'Heads up', hint: 'Tip', step: 'Coach', system: 'BASIC' };
 
 function showSaid(item) {
   const box = $('said');

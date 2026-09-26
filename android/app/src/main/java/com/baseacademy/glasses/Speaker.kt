@@ -74,7 +74,7 @@ class Speaker(
     val v = all[(i + 1) % all.size]
     tts.voice = v
     Settings.voiceName = v.name
-    speakNow("This is Base Academy. Step one: set the module stack.")
+    speakNow("This is BASIC. Step one: set the module stack.")
     return label(v)
   }
 

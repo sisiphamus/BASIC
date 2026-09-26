@@ -26,7 +26,7 @@ process.on('SIGINT', () => process.exit(0));
 function caption(frameId) {
   const v = verdict ? `${col[verdict.status] || white}${verdict.status} ${Number(verdict.confidence).toFixed(2)}${reset}${gray}  ${verdict.evidence || ''}` : `${gray}analyzing`;
   const cols = process.stdout.columns || 120;
-  const text = `${hivis}BASE ACADEMY${reset}${gray}  glasses view  #${frameId}  ${white}${step}${reset}${gray}  ${v}${reset}`;
+  const text = `${hivis}BASIC${reset}${gray}  glasses view  #${frameId}  ${white}${step}${reset}${gray}  ${v}${reset}`;
   process.stdout.write(`${E}1;1H${E}2K${text.slice(0, cols + 60)}`);
 }
 

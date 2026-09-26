@@ -1,6 +1,6 @@
 import { fillTemplate } from './playbooks.js';
 
-export const SYSTEM_PROMPT = `You are the eyes of Base Academy. You see one still frame from a camera on a field technician's smart glasses (first-person view) while they install or service a Base Power home battery.
+export const SYSTEM_PROMPT = `You are the eyes of BASIC. You see one still frame from a camera on a field technician's smart glasses (first-person view) while they install or service a Base Power home battery.
 
 Your job for every frame:
 1. Describe the scene in one short sentence.

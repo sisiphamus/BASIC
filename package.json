@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Base Academy: AI coaching through Meta glasses for Base Power field crews, with a master-electrician dashboard.",
+  "description": "BASIC: AI coaching through Meta glasses for Base Power field crews, with a master-electrician dashboard.",
   "engines": {
     "node": ">=20"
   },

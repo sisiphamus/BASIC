@@ -256,7 +256,7 @@ object Pipeline {
         .onFailure { error, _ -> fail("Camera permission check failed: ${error.description}") }
     if (!granted) {
       _status.update { it.copy(needsCameraPermission = true) }
-      fail("Open Base Academy and tap Allow glasses camera")
+      fail("Open BASIC and tap Allow glasses camera")
       return
     }
     if (camera != null || talking || paused) return // re-check after the suspend
