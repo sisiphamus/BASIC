@@ -55,15 +55,21 @@ export class Speaker {
       if (this.seen.size > 500) this.seen = new Set([...this.seen].slice(-200));
     }
     if (item.interrupt) {
-      this.queue = [];
+      // Supervisor jumps the line and cuts off whatever is playing, but the crew must still
+      // hear the step instructions: re-queue a cut-off instruction, keep queued ones.
+      const cut = this.current;
       this.stopCurrent();
+      const keep = this.queue.filter((q) => q.source === 'step' || q.source === 'supervisor' || q.source === 'system');
+      this.queue = [item, ...(cut && cut.source === 'step' ? [cut] : []), ...keep];
+      return this.pump();
     }
     this.queue.push(item);
-    if (this.queue.length > 4) {
-      // never fall more than a few lines behind: drop the oldest non-supervisor lines
-      const keep = this.queue.filter((q) => q.source === 'supervisor');
-      const rest = this.queue.filter((q) => q.source !== 'supervisor').slice(-3);
-      this.queue = [...keep, ...rest].slice(-4);
+    // Never fall far behind. Drop tips and rule reminders first, step instructions last.
+    while (this.queue.length > 5) {
+      let i = this.queue.findIndex((q) => q.source === 'hint' || q.source === 'rule');
+      if (i === -1) i = this.queue.findIndex((q) => q.source !== 'supervisor');
+      if (i === -1) i = 0;
+      this.queue.splice(i, 1);
     }
     this.pump();
   }

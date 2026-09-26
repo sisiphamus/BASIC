@@ -70,17 +70,21 @@ test('full job on the phone page: camera frames -> checks -> spoken coaching -> 
   await api('POST', `/api/sessions/${id}/messages`, { text: 'Nice. Watch the hose on your left.', from: 'Mike' });
   await waitFor(async () => (await spoken(page)).includes('Nice. Watch the hose on your left.'), { what: 'supervisor line' });
   await page.waitForSelector('#said[data-source="supervisor"]');
+  // the interrupt must not swallow the next step's instruction
+  await waitFor(async () => (await spoken(page)).some((t) => /^Put the level on top/.test(t)), { what: 'next instruction after supervisor interrupt' });
   assert.ok((await page.evaluate(() => window.__cancels)) > 0, 'supervisor interrupts current speech');
 
   // hands-free "skip"
   // speak "next step" in a quiet moment (commands heard while the glasses talk are ignored on purpose)
+  assert.equal(await page.textContent('#listen'), 'Voice commands off', 'off by default');
+  await page.click('#listen');
+  assert.equal(await page.textContent('#listen'), 'Voice commands on');
   await page.waitForFunction(() => !window.__ba.speaker.speaking);
   await page.evaluate(() => window.__say('next step'));
   await waitFor(async () => (await api('GET', `/api/sessions/${id}/events`)).events.some((e) => e.type === 'command' && e.command === 'next'), { what: 'voice skip' });
 
   await page.waitForSelector('#done:not([hidden])', { timeout: 30000 });
-  const words = await spoken(page);
-  assert.ok(words.some((t) => /All steps (complete|done)/.test(t)), words.join(' | '));
+  await waitFor(async () => (await spoken(page)).some((t) => /All steps (complete|done)/.test(t)), { what: 'completion line' });
   const s = await api('GET', `/api/sessions/${id}`);
   assert.equal(s.status, 'complete');
   assert.ok(s.frames >= 5, `frames: ${s.frames}`);
@@ -100,6 +104,7 @@ test('full job on the phone page: camera frames -> checks -> spoken coaching -> 
 test('voice commands are ignored while the glasses are talking', async () => {
   const { ctx, page } = await phone(`${env.base}/glasses`);
   const id = await startJob(page, { playbook: 'system-check', worker: 'Echo Test' });
+  await page.click('#listen');
   const cur = (await api('GET', `/api/sessions/${id}`)).current;
   await page.evaluate(() => {
     window.__ba.speaker.lastSpokeAt = Date.now();

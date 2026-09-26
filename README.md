@@ -39,7 +39,9 @@ There are three ways. A is the one to trust on stage.
 
 ### A. Glasses for audio, phone camera for video (most reliable)
 
-The glasses are a Bluetooth headset. The phone runs the glasses page with its back camera, clipped to a chest mount or held at eye level. Coaching plays in the glasses' speakers, and voice commands ("next", "repeat", "help", "back") use the phone's speech recognition.
+The glasses are a Bluetooth headset. The phone runs the glasses page with its back camera, clipped to a chest mount or held at eye level. Coaching plays in the glasses' speakers.
+
+Voice commands ("next", "repeat", "help", "back") use the phone's speech recognition and start **off**. Android chimes each time listening restarts, and on iPhones listening can interfere with the spoken coaching. Tap "Voice commands off" to turn them on, test on the real phone with the glasses, and leave them on only if the coaching still plays cleanly. The phone remembers the choice. Buttons and the supervisor's approve/skip always work.
 
 ### B. The glasses' own camera through a video call
 

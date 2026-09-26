@@ -351,7 +351,9 @@ function setupVoice() {
     $('listen').hidden = true;
     return;
   }
-  if (store.get('voice') !== 'off') state.voice.start();
+  // Off unless the crew turned it on before: Android chimes on every listen restart, and on
+  // iPhones listening can fight the speech output. Test it on the actual phone, then turn it on.
+  if (store.get('voice') === 'on') state.voice.start();
 }
 
 $('listen').addEventListener('click', () => {
