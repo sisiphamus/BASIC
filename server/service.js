@@ -8,6 +8,7 @@ import { parseRuleText, ruleIdFrom } from './rule-text.js';
 import { fillTemplate } from './playbooks.js';
 import { MockProvider } from './providers/mock.js';
 import { decodeQr } from './qr.js';
+import { jpegSize, shortHash } from './trace.js';
 
 const STALE_FRAME_MS = 8000;
 const TROUBLE_LINE = "I'm having trouble seeing right now. Keep going carefully. Your supervisor can still see your feed.";
@@ -28,7 +29,8 @@ export function sniffImage(buf) {
 }
 
 export class Service {
-  constructor({ store, playbooks, provider, hub, log = () => {} }) {
+  constructor({ store, playbooks, provider, hub, log = () => {}, tracer = null }) {
+    this.tracer = tracer;
     this.store = store;
     this.playbooks = playbooks;
     this.provider = provider;
@@ -130,8 +132,14 @@ export class Service {
     this.hub?.publish(s.id, { type: 'session', session: this.publicSession(s) });
   }
 
+  trace(sessionId, kind, data) {
+    this.tracer?.emit(sessionId, kind, data);
+  }
+
   dispatch(s, actions) {
     for (const a of actions) {
+      if (a.type === 'say') this.trace(s.id, 'speech.out', { text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, route: 'glasses (Bluetooth HFP)', chars: a.text.length });
+      else if (a.type === 'event') this.trace(s.id, `engine.${a.event}`, { ...a, type: undefined });
       if (a.type === 'say') {
         const say = { id: `${this.bootId}-${s.id.slice(0, 8)}-${++this.sayCounter}`, text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, ts: Date.now() };
         const ev = this.store.appendEvent(s.id, { type: 'say', ...say, sayId: say.id });
@@ -200,6 +208,9 @@ export class Service {
     // evidence pictures on the checklist are never pruned
     const keep = new Set(s.steps.map((st) => st.frameId).filter(Boolean));
     const frameId = this.store.saveFrame(id, buf, keep);
+    const dims = jpegSize(buf);
+    const rtNow = this.rt(id);
+    this.trace(id, 'frame.in', { frameId, bytes: buf.length, mime, width: dims?.width, height: dims?.height, sha256: shortHash(buf), step: s.steps[s.current].id, stepNo: s.current + 1, queue: rtNow.busy ? (rtNow.pending ? 'busy, replacing pending frame' : 'busy, queued as newest') : 'idle, analyzing now' });
     s.frames += 1;
     s.updatedAt = Date.now();
     s.lastFrameAt = s.updatedAt;
@@ -246,10 +257,16 @@ export class Service {
     const started = Date.now();
     try {
       // On scan steps, decode any QR code in the photo ourselves so the number is exact, not guessed.
+      const tq = Date.now();
       const qr = /qr|scan|serial/i.test(stepId) ? decodeQr(job.buf) : null;
+      if (/qr|scan|serial/i.test(stepId)) this.trace(s.id, 'vision.qr', { frameId: job.frameId, decoder: 'jsQR', result: qr || null, ms: Date.now() - tq });
       if (qr) this.log(`QR decoded (${s.id.slice(0, 8)}): ${qr}`);
       const model = s.simulated ? this.simProvider : this.provider;
-      const out = await model.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: buildUserPrompt(s, { qr }), schema: RESPONSE_SCHEMA, sessionId: s.id });
+      const userPrompt = buildUserPrompt(s, { qr });
+      const md = model.describe?.() || {};
+      this.trace(s.id, 'model.request', { frameId: job.frameId, provider: md.provider, model: md.model, stepId, imageBytes: job.buf.length, systemPromptChars: SYSTEM_PROMPT.length, promptChars: userPrompt.length, prompt: userPrompt, schema: 'scene, step{status,evidence,confidence,coach_line}, rules[]', rulesActive: s.rules.length });
+      const out = await model.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: userPrompt, schema: RESPONSE_SCHEMA, sessionId: s.id });
+      this.trace(s.id, 'model.response', { frameId: job.frameId, model: out.model, latencyMs: Date.now() - started, raw: out.raw ?? null, parsed: out.result, usage: out.usage ?? null, costUsd: out.costUsd ?? null });
       const result = out.result || {};
       result.step = { ...(result.step || {}), id: stepId };
       r.consecutiveErrors = 0;
@@ -269,12 +286,16 @@ export class Service {
         qr: qr || undefined,
       });
       this.hub?.publish(s.id, { type: 'event', sessionId: s.id, event: ev });
+      const before = s.current;
+      const minConf = s.stepDefs[s.current]?.min_confidence ?? 0.6;
       const actions = applyAnalysis(s, result, { now: Date.now(), frameId: job.frameId });
+      this.trace(s.id, 'engine.decision', { frameId: job.frameId, stepId, status: result.step.status, confidence: result.step.confidence, gate: minConf, gatePassed: result.step.confidence >= minConf, stepBefore: before + 1, stepAfter: s.current + 1, advanced: s.current !== before, rulesHit: (result.rules || []).map((x) => x.id), spoken: actions.filter((a) => a.type === 'say').length });
       this.dispatch(s, actions);
     } catch (e) {
       r.consecutiveErrors += 1;
       s.modelErrors += 1;
       r.lastError = String(e.message || e).slice(0, 300);
+      this.trace(s.id, 'model.error', { frameId: job.frameId, message: r.lastError, consecutive: r.consecutiveErrors });
       const ev = this.store.appendEvent(s.id, { type: 'model.error', frameId: job.frameId, message: r.lastError });
       this.hub?.publish(s.id, { type: 'event', sessionId: s.id, event: ev });
       this.log(`model error (${s.id.slice(0, 8)}): ${r.lastError}`);

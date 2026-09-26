@@ -261,7 +261,7 @@ export class GeminiProvider {
       const cand = body?.candidates?.[0];
       const text = (cand?.content?.parts || []).filter((p) => !p.thought && typeof p.text === 'string').map((p) => p.text).join('');
       if (!text) throw new Error(`Gemini returned no text (finishReason ${cand?.finishReason || 'none'})`);
-      return { result: normalizeResult(parseModelJson(text)), model, latencyMs: Date.now() - started, usage: body.usageMetadata || null };
+      return { result: normalizeResult(parseModelJson(text)), raw: text, model, latencyMs: Date.now() - started, usage: body.usageMetadata || null };
     }
     throw lastErr || new Error('no Gemini model is available');
   }

@@ -92,7 +92,7 @@ export class ClaudeCliProvider {
         if (!result) return finish(reject, new Error(`Claude CLI gave no result (exit ${code}): ${err.trim().slice(0, 200)}`));
         if (result.is_error) return finish(reject, new Error(`Claude CLI error: ${String(result.result || result.subtype).slice(0, 200)}`));
         try {
-          finish(resolve, { result: normalizeResult(parseModelJson(result.result)), model: this.lastModel || `claude-${this.model}`, latencyMs: Date.now() - started, usage: result.usage || null });
+          finish(resolve, { result: normalizeResult(parseModelJson(result.result)), raw: String(result.result), model: this.lastModel || `claude-${this.model}`, latencyMs: Date.now() - started, usage: result.usage || null, costUsd: result.total_cost_usd ?? null });
         } catch (e) {
           finish(reject, e);
         }

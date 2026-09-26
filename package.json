@@ -17,7 +17,9 @@
     "simulate": "node scripts/simulate.js",
     "check:gemini": "node scripts/check-gemini.js",
     "archive-data": "node scripts/archive-data.js",
-    "tunnel": "npx -y cloudflared tunnel --url http://localhost:3000"
+    "tunnel": "npx -y cloudflared tunnel --url http://localhost:3000",
+    "console": "node scripts/console.js",
+    "frames": "node scripts/frames.js"
   },
   "dependencies": {
     "dotenv": "^18.0.4",

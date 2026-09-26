@@ -14,6 +14,7 @@ import { Hub } from './hub.js';
 import { PlaybookLibrary } from './playbooks.js';
 import { Service } from './service.js';
 import { Store } from './store.js';
+import { Tracer } from './trace.js';
 import { GeminiProvider } from './providers/gemini.js';
 import { MockProvider } from './providers/mock.js';
 import { ClaudeCliProvider } from './providers/claude-cli.js';
@@ -69,7 +70,7 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
   for (const e of playbooks.errors()) log(`playbook ${e.file} has an error and was skipped: ${e.error}`);
   const store = new Store(dataDir).load();
   const hub = new Hub();
-  const service = new Service({ store, playbooks, provider, hub, log });
+  const service = new Service({ store, playbooks, provider, hub, log, tracer: new Tracer(dataDir, hub) });
   service.sweepIdle();
   const sweeper = setInterval(() => service.sweepIdle(), 5 * 60_000);
   sweeper.unref();
