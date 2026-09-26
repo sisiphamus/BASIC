@@ -64,6 +64,8 @@ No key? The server runs a built-in walkthrough model that fakes believable resul
    ```
 3. Open **Base Academy** on the phone. Enter your name and the server address, then tap **Connect glasses (one time)**. That hops to Meta AI to approve and comes back. Then tap **Start**, and **Allow glasses camera** if it asks.
 
+**Why photos pause while the glasses talk.** While the glasses camera is streaming, the glasses mute normal media audio (Meta DAT issue #78). So by default the app stops the camera, speaks, and restarts it; photos resume about a second after the line ends. If voice still doesn't come through on your glasses, turn on "Keep camera on while talking (phone-call audio)". That speaks over the Bluetooth call channel instead (lower quality; some phones drop the camera). Photos taken during a stream come back at about 1080×1440; the app shows the real size and capture time on screen.
+
 **Server address from the phone**
 
 - Phone plugged into the laptop: `adb reverse tcp:3000 tcp:3000`, then use `http://localhost:3000`.
