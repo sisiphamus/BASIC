@@ -57,9 +57,9 @@ steps:
 
   - id: qr-scan
     title: QR scan
-    say: Scan the unit. Point at the QR code on the Base label.
+    say: Scan the unit. Look at the QR code on the Base label.
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
-    check: A QR code or serial label on the battery is visible, with the tech pointing at it or holding it close. It does NOT need to be readable, the QR code is small. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
+    check: The Base spec label or its QR code is visible on the battery (the QR is small; it does NOT need to be readable, and no hand or pointing gesture is required). A visible label with its QR corner in frame counts as scanned. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
 
   - id: disco-off
     title: Disco off
