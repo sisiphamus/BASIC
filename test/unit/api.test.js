@@ -452,3 +452,19 @@ test('a playbook\'s scene context reaches the model prompt', async () => {
   s.context = 'Filmed hackathon demo. Speak formally.';
   assert.match(buildUserPrompt(s), /SCENE CONTEXT: Filmed hackathon demo\. Speak formally\./);
 });
+
+test('on a scan step, a QR code in the photo is decoded and handed to the model', async () => {
+  const QRCode = (await import('qrcode')).default;
+  const { execFileSync } = await import('node:child_process');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qrapi-'));
+  await QRCode.toFile(path.join(dir, 'q.png'), 'SN-TEST-42', { margin: 2, width: 200 });
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=gray:s=1080x1440', '-i', path.join(dir, 'q.png'), '-filter_complex', 'overlay=400:600', '-frames:v', '1', path.join(dir, 'f.jpg')]);
+  const s = await newSession({ playbookId: 'base-install' });
+  await api('POST', `/api/sessions/${s.id}/commands`, { command: 'next' }); // -> qr-scan
+  mock.enqueue(r('pass', 0.9));
+  await api('POST', `/api/sessions/${s.id}/frames`, fs.readFileSync(path.join(dir, 'f.jpg')));
+  await srv.service.idle(s.id);
+  assert.match(mock.calls[0].user, /QR CODE DECODED FROM THIS PHOTO .*"SN-TEST-42"/);
+  const ev = (await api('GET', `/api/sessions/${s.id}/events?types=analysis`)).body.events;
+  assert.equal(ev[0].qr, 'SN-TEST-42');
+});

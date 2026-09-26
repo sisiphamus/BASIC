@@ -41,7 +41,7 @@ export const RESPONSE_SCHEMA = {
 };
 
 /** Build the per-frame user prompt from the live session (so rule edits apply on the next frame). */
-export function buildUserPrompt(session) {
+export function buildUserPrompt(session, { qr = null } = {}) {
   const vars = { ...session.job, worker: session.worker };
   const i = session.current;
   const step = session.stepDefs[i];
@@ -63,6 +63,7 @@ export function buildUserPrompt(session) {
       ? `WATCH RULES:\n${rules.map((r) => `- id="${r.id}": ${fillTemplate(r.when, vars)}`).join('\n')}`
       : 'WATCH RULES: none',
     session.lastScene ? `Previous frame looked like: ${session.lastScene}` : '',
+    qr ? `QR CODE DECODED FROM THIS PHOTO (exact, by a barcode reader): "${qr}". The QR scan succeeded: pass this step and read this value back in coach_line.` : '',
   ];
   return lines.filter(Boolean).join('\n\n');
 }

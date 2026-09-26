@@ -18,7 +18,11 @@ context: >-
   harness, D2I cable or breaker at the demo: for those steps the tech either acts the step out at the
   stack (hands clearly placing, connecting, uncapping or routing at the right spot) or shows the
   matching screen of the Base installer app on a phone. Accept a clear, deliberate pretend action or
-  the matching app screen as done; do not require the real part. Serial labels and app screens are
+  the matching app screen as done; do not require the real part. For steps whose part is missing, the
+  instruction explains what happens in a real install and then asks for one simple stand-in action
+  (set the top shell, press its edge, show a corner): judge only that stand-in action, and in
+  coach_line briefly confirm it and tie it back to the real step (for example "Top shell is flat on
+  all four corners; that is the seating the inverter needs on its studs"). Serial labels and app screens are
   shown on a phone screen. Speak like a senior Base field supervisor coaching a new installer:
   formal, precise, calm, technical vocabulary (module stack, Disco, inverter, bus bar, harness,
   D2I, side panels, top panel, commissioning, grid test, islanding, backup, closeout). No slang, no
@@ -61,27 +65,27 @@ steps:
 
   - id: inverter
     title: Inverter
-    say: The inverter seats on the top plate of the stack, on the four round mounting studs. Point to each stud in turn, then show me how the inverter would line up over them.
+    say: In a real install, the inverter seats on the four round mounting studs on the top plate and must sit flat before anything is connected. There is no inverter today, so set the top shell on the stack in its place and make sure it sits flat on all four corners.
     why: The inverter converts the battery's DC to the home's AC. It must be fully seated on its mounts before the bus is connected.
-    check: The top of the battery stack where the inverter mounts is in view, with the tech's hands placing, seating or indicating the inverter there, or an inverter unit set on the stack.
+    check: The white top shell (top panel) has been set on top of the battery stack and is sitting flat, or the tech is placing it there.
 
   - id: bus-harness
     title: Bus bar and harness
-    say: Show me where the bus bar and harness connect on the top module. Put your hand on the connection point and hold it there.
+    say: In a real install, the bus bar carries battery current from the modules to the inverter and the harness carries its control signals, so both must be fully seated and latched. For this step, press down on the front edge of the top shell and confirm it does not rock.
     why: The bus bar carries battery current and the harness carries control signals. A loose connection here runs hot.
-    check: A close-up of the stack's connection area (bus bar, connector, port or cable ends), with the tech's hand at it making the connection, or a cable plugged in.
+    check: The tech's hand is pressing on or running along the front edge of the top shell on the battery stack, and the shell is sitting flat.
 
   - id: d2i-prep
     title: D2I prep
-    say: The D2I is the cable that runs out to the Disco. Hold its connector up to the glasses and pull the protective cap off the end.
+    say: In a real install, the D2I carries power out to the Disco, and its cap stays on until routing so the pins stay clean. For this step, show me the back corner of the stack where the D2I would exit the enclosure.
     why: The D2I carries the connection out to the Disco. The cap stays on until routing so the pins stay clean.
-    check: A connector, plug or cable end is held up close to the camera, or the tech's fingers are clearly removing a cap from a connector at the stack.
+    check: A corner or back edge of the battery stack, with the top shell on it, is shown up close, or the tech is pointing at where a cable would exit.
 
   - id: panels
     title: Panels and D2I routing
-    say: Set the top panel over the stack, front edge first, and lower it until it sits flat and flush on every edge. Then step back so I can see the whole enclosure.
+    say: In a real install, the four side panels go on first and the top panel locks them in place, with the D2I routed through the panel opening. Today the top shell stands in for the full enclosure. Step back so I can see the whole unit.
     why: The panels are the weather and touch barrier. The D2I must exit through the opening, not pinched under a panel.
-    check: A white side panel is fitted against the stack and the white top panel is seated on top, shown as an assembled unit.
+    check: The whole battery stack with the white top shell seated on it is in view, shown as one assembled unit.
 
   - id: commission
     title: Commissioning

@@ -7,6 +7,7 @@ import { SYSTEM_PROMPT, RESPONSE_SCHEMA, buildUserPrompt } from './prompt.js';
 import { parseRuleText, ruleIdFrom } from './rule-text.js';
 import { fillTemplate } from './playbooks.js';
 import { MockProvider } from './providers/mock.js';
+import { decodeQr } from './qr.js';
 
 const STALE_FRAME_MS = 8000;
 const TROUBLE_LINE = "I'm having trouble seeing right now. Keep going carefully. Your supervisor can still see your feed.";
@@ -244,8 +245,11 @@ export class Service {
     const stepId = s.steps[s.current].id;
     const started = Date.now();
     try {
+      // On scan steps, decode any QR code in the photo ourselves so the number is exact, not guessed.
+      const qr = /qr|scan|serial/i.test(stepId) ? decodeQr(job.buf) : null;
+      if (qr) this.log(`QR decoded (${s.id.slice(0, 8)}): ${qr}`);
       const model = s.simulated ? this.simProvider : this.provider;
-      const out = await model.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: buildUserPrompt(s), schema: RESPONSE_SCHEMA, sessionId: s.id });
+      const out = await model.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: buildUserPrompt(s, { qr }), schema: RESPONSE_SCHEMA, sessionId: s.id });
       const result = out.result || {};
       result.step = { ...(result.step || {}), id: stepId };
       r.consecutiveErrors = 0;
@@ -262,6 +266,7 @@ export class Service {
         rules: result.rules || [],
         model: out.model,
         latencyMs: r.lastLatencyMs,
+        qr: qr || undefined,
       });
       this.hub?.publish(s.id, { type: 'event', sessionId: s.id, event: ev });
       const actions = applyAnalysis(s, result, { now: Date.now(), frameId: job.frameId });
