@@ -12,13 +12,24 @@ const MARK = {
   'supervisor.message': { cls: 'bg-ink', label: 'You spoke' },
 };
 
-/** Index of the last frame taken at or before ts. */
+/** Index of the last frame taken at or before ts. frameTs: Map frameId -> ts. */
 export function frameIndexAt(frames, frameTs, ts) {
+  let lo = 0;
+  let hi = frames.length - 1;
   let best = 0;
-  for (let i = 0; i < frames.length; i++) {
-    const t = frameTs[frames[i]];
-    if (t && t <= ts) best = i;
-    else if (t && t > ts) break;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    // A frame with no known time borrows its nearest earlier neighbour's; frames are in order.
+    let k = mid;
+    while (k >= lo && frameTs.get(frames[k]) === undefined) k--;
+    if (k < lo) {
+      lo = mid + 1;
+      continue;
+    }
+    if (frameTs.get(frames[k]) <= ts) {
+      best = mid;
+      lo = mid + 1;
+    } else hi = k - 1;
   }
   return best;
 }
@@ -39,6 +50,7 @@ export function useMarkers(events, frames, frameTs) {
 
 export default function Scrubber({ sessionId, frames, index, onSeek, markers, live }) {
   const track = useRef(null);
+  const root = useRef(null);
   const n = frames.length;
   const pct = (i) => (n <= 1 ? 100 : (i / (n - 1)) * 100);
   const byIndex = useMemo(() => {
@@ -53,11 +65,12 @@ export default function Scrubber({ sessionId, frames, index, onSeek, markers, li
     onSeek(Math.round((x / r.width) * (n - 1)));
   };
 
-  // Arrow keys step through footage anywhere on the page, unless someone is typing.
+  // Arrow keys step through footage when focus is on the scrubber or nowhere in particular.
   useEffect(() => {
     const onKey = (e) => {
-      const t = e.target;
-      if (t.closest?.('input, textarea, select, [contenteditable="true"]') || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = document.activeElement;
+      const here = t === document.body || t === null || root.current?.contains(t);
+      if (!here || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === 'ArrowLeft') onSeek(Math.max(0, index - (e.shiftKey ? 10 : 1)));
       else if (e.key === 'ArrowRight') onSeek(Math.min(n - 1, index + (e.shiftKey ? 10 : 1)));
       else return;
@@ -72,7 +85,7 @@ export default function Scrubber({ sessionId, frames, index, onSeek, markers, li
   const strip = frames.slice(from, from + 9);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={root} className="flex flex-col gap-3">
       <div
         ref={track}
         role="slider"

@@ -1,19 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLive, useNow } from '../live.jsx';
 import { ago, attention, clock, currentStep, duration, passedCount, plural, urgency } from '../model.js';
 import { Frame, Loading, Signal, StepTrack } from '../parts/ui.jsx';
 import StartCrew from '../parts/StartCrew.jsx';
 
-
 function lastSaid(recent) {
   for (let i = recent.length - 1; i >= 0; i--) if (recent[i].type === 'say') return recent[i];
   return null;
 }
 
-function CrewRow({ s, recent, frameAt, needs, now }) {
+function CrewRow({ s, recent, frameAt: seenAt, needs, now }) {
   const step = currentStep(s);
   const said = lastSaid(recent);
+  const frameAt = seenAt || s.lastFrameAt;
   const fresh = frameAt && now - frameAt < 15e3;
   return (
     <li>
@@ -21,7 +21,7 @@ function CrewRow({ s, recent, frameAt, needs, now }) {
         to={`/sessions/${s.id}`}
         className={`group grid grid-cols-[112px_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-md border bg-panel p-2.5 transition-colors hover:border-ink sm:grid-cols-[152px_minmax(0,1fr)] lg:grid-cols-[152px_minmax(0,15rem)_minmax(0,1fr)_18rem] lg:items-stretch lg:gap-x-6 ${needs.length ? 'border-ink' : 'border-line'}`}
       >
-        <Frame sessionId={s.id} frameId={s.lastFrameId} alt={`Latest picture from ${s.worker}`} className="aspect-[4/3] rounded-[4px] lg:row-span-1" />
+        <Frame sessionId={s.id} frameId={s.lastFrameId} alt={`Latest picture from ${s.worker}`} className="aspect-[4/3] w-full self-start rounded-[4px]" />
 
         <div className="flex min-w-0 flex-col">
           <div className="flex items-baseline gap-2">
@@ -67,7 +67,11 @@ function CrewRow({ s, recent, frameAt, needs, now }) {
   );
 }
 
-function Finished({ list }) {
+const FINISHED_SHOWN = 10;
+
+function Finished({ list: all }) {
+  const [open, setOpen] = useState(false);
+  const list = open ? all : all.slice(0, FINISHED_SHOWN);
   return (
     <section className="mt-12" aria-labelledby="finished">
       <h2 id="finished" className="font-display text-2xl font-semibold">
@@ -101,12 +105,17 @@ function Finished({ list }) {
           );
         })}
       </ul>
+      {all.length > FINISHED_SHOWN && (
+        <button type="button" className="btn btn-sm mt-3" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {open ? 'Show fewer' : `Show all ${all.length}`}
+        </button>
+      )}
     </section>
   );
 }
 
 export default function Floor() {
-  const [{ sessions, recent, frameAt, loaded, conn }] = useLive();
+  const [{ sessions, recent, frameAt, acks, loaded, conn }] = useLive();
   const now = useNow(5000);
   const [adding, setAdding] = useState(false);
 
@@ -114,13 +123,31 @@ export default function Floor() {
     const all = Object.values(sessions);
     const active = all
       .filter((s) => s.status === 'active')
-      .map((s) => ({ s, needs: attention(s, recent[s.id], frameAt[s.id], now) }))
+      .map((s) => ({ s, needs: attention(s, recent[s.id], frameAt[s.id], now, acks[s.id]) }))
       .sort((a, b) => urgency(a.needs) - urgency(b.needs) || a.s.worker.localeCompare(b.s.worker));
     const finished = all
       .filter((s) => s.status !== 'active' && now - (s.endedAt || s.updatedAt) < 24 * 3600e3)
       .sort((a, b) => (b.endedAt || b.updatedAt) - (a.endedAt || a.updatedAt));
     return { active, finished };
-  }, [sessions, recent, frameAt, now]);
+  }, [sessions, recent, frameAt, acks, now]);
+
+  // Simulated crews finish and restart every few minutes; don't flash the setup panel in the gap.
+  const seenActive = useRef(false);
+  const [emptyLong, setEmptyLong] = useState(false);
+  const none = loaded && active.length === 0;
+  useEffect(() => {
+    if (!none) {
+      if (loaded) seenActive.current = true;
+      setEmptyLong(false);
+      return;
+    }
+    if (!seenActive.current) {
+      setEmptyLong(true);
+      return;
+    }
+    const t = setTimeout(() => setEmptyLong(true), 5000);
+    return () => clearTimeout(t);
+  }, [none, loaded]);
 
   if (!loaded) return conn.state === 'offline' ? <p className="py-16 text-ink-2">Waiting for the server…</p> : <Loading label="Connecting to the floor" />;
 
@@ -153,7 +180,7 @@ export default function Floor() {
         )}
       </div>
 
-      {(adding || active.length === 0) && (
+      {(adding || (active.length === 0 && emptyLong)) && (
         <section className="mb-8 rounded-md border border-line bg-panel p-6" aria-labelledby="add-crew">
           <h2 id="add-crew" className="mb-5 font-display text-2xl font-semibold">
             {active.length ? 'Add a crew' : 'No crews on a job right now'}

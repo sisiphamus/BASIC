@@ -114,7 +114,11 @@ export function Signal({ item, size = 'md' }) {
       >
         {item.signal}
       </div>
-      <p className={`bg-panel text-ink ${size === 'lg' ? 'px-3 py-2.5 text-[0.9375rem]' : 'line-clamp-2 px-2.5 py-2 text-sm'}`}>{item.detail}</p>
+      <p className={`bg-panel text-ink [overflow-wrap:anywhere] ${size === 'lg' ? 'px-3 py-2.5 text-[0.9375rem]' : 'px-2.5 py-2 text-sm'}`}>
+        <span className={size === 'lg' ? '' : 'line-clamp-2'} title={size === 'lg' ? undefined : item.detail}>
+          {item.detail}
+        </span>
+      </p>
     </div>
   );
 }

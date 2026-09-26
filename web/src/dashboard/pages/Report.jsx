@@ -8,7 +8,7 @@ function Meta({ label, children }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs font-semibold text-ink-2">{label}</dt>
-      <dd className="mt-0.5 text-[0.9375rem]">{children || 'Not recorded'}</dd>
+      <dd className="mt-0.5 text-[0.9375rem] [overflow-wrap:anywhere]">{children || 'Not recorded'}</dd>
     </div>
   );
 }
@@ -47,7 +47,7 @@ export default function Report() {
         </div>
       </div>
 
-      <article className="mx-auto max-w-[920px] bg-panel px-4 py-8 sm:my-6 sm:border sm:border-line sm:px-10 sm:py-10 print:m-0 print:border-0 print:p-0">
+      <article className="mx-auto max-w-[920px] [overflow-wrap:anywhere] bg-panel px-4 py-8 sm:my-6 sm:border sm:border-line sm:px-10 sm:py-10 print:m-0 print:border-0 print:p-0">
         <header className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-4">
           <div>
             <p className="font-display text-lg font-bold uppercase tracking-[0.04em]">Base Academy</p>

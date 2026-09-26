@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { useLive, useNow } from '../live.jsx';
-import { attention, clock, clockSec } from '../model.js';
+import { useLiveApi, useLiveSlice, useNow } from '../live.jsx';
+import { attention, clock, clockSec, feedState } from '../model.js';
 import { useSession } from '../useSession.js';
 import { ActionButton, Frame, Loading, Problem, Signal } from '../parts/ui.jsx';
 import Scrubber, { frameIndexAt, useMarkers } from '../parts/Scrubber.jsx';
@@ -43,12 +43,13 @@ function EndJob({ session, onEnded }) {
   );
 }
 
-function ModelState({ session }) {
+function ModelState({ session, feed }) {
   const l = session.live || {};
   if (session.status !== 'active') return <span>{session.status === 'complete' ? 'Job complete' : 'Job ended'}</span>;
+  const glasses = l.glassesOnline ? 'Glasses connected' : feed.kind === 'offline' ? 'Glasses offline' : session.simulated ? null : 'Pictures coming in';
   return (
     <span className="flex flex-wrap gap-x-3 gap-y-1">
-      <span className={l.glassesOnline ? '' : 'font-semibold text-ink'}>{l.glassesOnline ? 'Glasses connected' : 'Glasses offline'}</span>
+      {glasses && <span className={feed.kind === 'offline' ? 'font-semibold text-ink' : ''}>{glasses}</span>}
       {l.analyzing ? <span>Checking the latest picture…</span> : l.lastLatencyMs != null && <span>Last check took {(l.lastLatencyMs / 1000).toFixed(1)} s</span>}
       {l.lastError && <span className="text-fail">Camera check failed: {l.lastError}</span>}
     </span>
@@ -71,21 +72,13 @@ function FrameReading({ analysis }) {
 
 export default function Crew() {
   const { id } = useParams();
-  const { session, events, frames, error, ready, reload, setSession } = useSession(id);
-  const [{ recent, frameAt }] = useLive();
+  const { session, events, frames, frameTs, analysisBy, error, ready, reload, setSession } = useSession(id);
+  const live = useLiveApi();
+  const recent = useLiveSlice('recent', id);
+  const frameAt = useLiveSlice('frameAt', id);
+  const ackAt = useLiveSlice('acks', id);
   const now = useNow(5000);
   const [cursor, setCursor] = useState(null); // null = follow live
-
-  const frameTs = useMemo(() => {
-    const m = {};
-    for (const e of events) if (e.type === 'frame') m[e.frameId] = e.ts;
-    return m;
-  }, [events]);
-  const analysisBy = useMemo(() => {
-    const m = {};
-    for (const e of events) if (e.type === 'analysis') m[e.frameId] = e;
-    return m;
-  }, [events]);
   const markers = useMarkers(events, frames, frameTs);
 
   const seek = useCallback((i) => setCursor(i >= frames.length - 1 ? null : Math.max(0, i)), [frames.length]);
@@ -102,23 +95,24 @@ export default function Crew() {
   const index = cursor ?? frames.length - 1;
   const fid = frames[index];
   const isLive = cursor === null && session.status === 'active';
-  const needs = attention(session, recent[id] || events.slice(-80), frameAt[id], now);
+  const needs = attention(session, recent || events.slice(-80), frameAt, now, ackAt);
+  const feed = feedState(session, frameAt, now);
   const first = session.worker.split(' ')[0];
 
   return (
     <div className="flex flex-col gap-8 pt-6">
       <header className="flex flex-wrap items-end gap-x-8 gap-y-4">
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-full">
           <nav className="text-sm text-ink-2" aria-label="Breadcrumb">
             <Link to="/" className="link">
               Floor
             </Link>
           </nav>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
-            <h1 className="font-display text-[2.5rem] font-bold leading-none">{session.worker}</h1>
+            <h1 className="font-display text-[2.5rem] font-bold leading-none [overflow-wrap:anywhere]">{session.worker}</h1>
             {session.mode === 'trainee' && <span className="rounded-[3px] border border-ink px-1.5 py-0.5 text-sm font-semibold">Trainee</span>}
           </div>
-          <p className="mt-2 text-ink-2">
+          <p className="mt-2 text-ink-2 [overflow-wrap:anywhere]">
             {[session.job?.customer, session.job?.address].filter(Boolean).join(', ')}
             {session.job?.customer ? ' · ' : ''}
             {session.playbookTitle} · started {clock(session.createdAt)}
@@ -141,9 +135,9 @@ export default function Crew() {
             <div className="mt-3 flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
               <div className="min-w-0 flex-1">
                 <p className="font-display text-xl font-semibold">
-                  {!fid ? 'Waiting for the first picture' : isLive ? `Live · ${clockSec(frameTs[fid])}` : `Picture ${index + 1} of ${frames.length} · ${clockSec(frameTs[fid])}`}
+                  {!fid ? 'Waiting for the first picture' : [isLive ? 'Live' : `Picture ${index + 1} of ${frames.length}`, clockSec(frameTs.get(fid) || (isLive ? session.lastFrameAt : null))].filter(Boolean).join(' · ')}
                 </p>
-                {fid && <FrameReading analysis={analysisBy[fid]} />}
+                {fid && <FrameReading analysis={analysisBy.get(fid)} />}
               </div>
               {cursor !== null && (
                 <button type="button" className="btn btn-sm" onClick={() => setCursor(null)}>
@@ -155,7 +149,7 @@ export default function Crew() {
               <Scrubber sessionId={session.id} frames={frames} index={index} onSeek={seek} markers={markers} live={isLive} />
             </div>
             <p className="mt-3 text-sm text-ink-2">
-              <ModelState session={session} />
+              <ModelState session={session} feed={feed} />
             </p>
           </section>
 
@@ -165,6 +159,11 @@ export default function Crew() {
               {needs.map((n) => (
                 <Signal key={n.kind} item={n} size="lg" />
               ))}
+              {needs.some((n) => n.kind === 'fail' || n.kind === 'rule') && (
+                <button type="button" className="btn btn-sm self-start" onClick={() => live.ack(id)}>
+                  OK, seen
+                </button>
+              )}
             </div>
           )}
           <section aria-labelledby="steps">
@@ -182,7 +181,7 @@ export default function Crew() {
         </div>
 
         <div className={`grid min-w-0 content-start gap-x-8 gap-y-10 lg:col-start-1 lg:row-start-2 ${session.status === "active" ? "xl:grid-cols-2" : ""}`}>
-          <TalkBox session={session} />
+          <TalkBox session={session} feed={feed} />
           <Transcript events={events} onSeekTs={seekTs} worker={session.worker} />
         </div>
       </div>

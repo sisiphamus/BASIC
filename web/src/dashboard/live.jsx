@@ -2,10 +2,13 @@
 // tail of recent events per crew (enough to decide who needs the supervisor).
 // Reconnects with backoff and re-fetches on every reconnect so nothing is missed.
 
-import { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { api } from './api.js';
 
 const TAIL = 80;
+// The floor only needs events that change what a crew needs; frames and model readings are
+// hundreds per job and would push those out of the tail.
+const NOISY = new Set(['frame', 'analysis']);
 const PING_MS = 15000;
 const PONG_GRACE_MS = 8000;
 
@@ -17,6 +20,7 @@ function createLive() {
     conn: { state: 'connecting', retryAt: null, since: null },
     loaded: false,
     health: null,
+    acks: {},
   };
   const subs = new Set();
   const listeners = new Set();
@@ -34,11 +38,20 @@ function createLive() {
 
   function mergeEvents(id, events) {
     const cur = state.recent[id] || [];
-    const seen = new Set(cur.map((e) => e.seq));
-    const next = cur.concat(events.filter((e) => !seen.has(e.seq))).sort((a, b) => a.seq - b.seq).slice(-TAIL);
     let frameAt = state.frameAt[id];
     for (const e of events) if (e.type === 'frame' && (!frameAt || e.ts > frameAt)) frameAt = e.ts;
-    set({ recent: { ...state.recent, [id]: next }, frameAt: frameAt ? { ...state.frameAt, [id]: frameAt } : state.frameAt });
+    const notable = events.filter((e) => !NOISY.has(e.type));
+    let next = cur;
+    if (notable.length) {
+      const last = cur.length ? cur[cur.length - 1].seq : -1;
+      if (notable.every((e) => e.seq > last)) next = cur.concat(notable).slice(-TAIL);
+      else {
+        const seen = new Set(cur.map((e) => e.seq));
+        next = cur.concat(notable.filter((e) => !seen.has(e.seq))).sort((a, b) => a.seq - b.seq).slice(-TAIL);
+      }
+    }
+    if (next === cur && frameAt === state.frameAt[id]) return;
+    set({ recent: next === cur ? state.recent : { ...state.recent, [id]: next }, frameAt: frameAt ? { ...state.frameAt, [id]: frameAt } : state.frameAt });
   }
 
   async function backfill(sessions) {
@@ -74,7 +87,7 @@ function createLive() {
     } else if (msg.type === 'frame') {
       const s = state.sessions[msg.sessionId];
       set({
-        sessions: s ? { ...state.sessions, [s.id]: { ...s, lastFrameId: msg.frameId, frames: s.frames + 1 } } : state.sessions,
+        sessions: s ? { ...state.sessions, [s.id]: { ...s, lastFrameId: msg.frameId, lastFrameAt: msg.ts, frames: s.frames + 1 } } : state.sessions,
         frameAt: { ...state.frameAt, [msg.sessionId]: msg.ts },
       });
     }
@@ -146,6 +159,10 @@ function createLive() {
     upsert(session) {
       set({ sessions: { ...state.sessions, [session.id]: session } });
     },
+    /** Supervisor has seen this crew's warnings; hide the ones raised before now. */
+    ack(id) {
+      set({ acks: { ...state.acks, [id]: Date.now() } });
+    },
   };
 }
 
@@ -164,6 +181,20 @@ export function useLive() {
   const live = useContext(LiveContext);
   const state = useSyncExternalStore(live.subscribe, live.get);
   return [state, live];
+}
+
+/**
+ * One crew's slice of the live store, e.g. useLiveSlice('sessions', id). The component only
+ * re-renders when that slice changes, not on every other crew's traffic.
+ */
+export function useLiveSlice(key, id) {
+  const live = useContext(LiveContext);
+  const get = useCallback(() => live.get()[key][id], [live, key, id]);
+  return useSyncExternalStore(live.subscribe, get);
+}
+
+export function useLiveApi() {
+  return useContext(LiveContext);
 }
 
 /** Re-render every `ms` so "12s ago" labels stay honest. */

@@ -37,8 +37,8 @@ export default function Rules({ session, onChange }) {
           {session.rules.map((r) => (
             <li key={r.id} className="flex items-start gap-3 py-3">
               <div className="min-w-0 flex-1 text-sm">
-                <p className="first-letter:uppercase">{r.when}</p>
-                <p className="mt-0.5 text-ink-2">{r.say ? <>Glasses say “{r.say}”</> : 'Glasses pick the words'}</p>
+                <p className="[overflow-wrap:anywhere] first-letter:uppercase">{r.when}</p>
+                <p className="mt-0.5 text-ink-2 [overflow-wrap:anywhere]">{r.say ? <>Glasses say “{r.say}”</> : 'Glasses pick the words'}</p>
               </div>
               {active && (
                 <ActionButton
