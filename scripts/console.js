@@ -172,7 +172,7 @@ function live() {
     const ws = new WebSocket(url);
     ws.on('open', () => {
       st.link = 'live';
-      line(`${ts(Date.now())}  ${tag(c.green, '● LINK')}${c.gray}telemetry stream open ${url}${c.reset}`);
+      line(`${ts(Date.now())}  ${K('link')}${c.green}telemetry stream open${c.reset}  ${D(url)}`);
     });
     ws.on('message', (d) => {
       st.msgs += 1;
