@@ -12,13 +12,14 @@ import java.io.ByteArrayOutputStream
 object Photos {
   private const val QUALITY = 92
 
-  fun toJpeg(photo: PhotoData): ByteArray? =
+  /** Returns the JPEG and its size as "WxH" (so we can see what the glasses really deliver). */
+  fun toJpeg(photo: PhotoData): Pair<ByteArray, String>? =
       when (photo) {
-        is PhotoData.Bitmap -> encode(photo.bitmap)
+        is PhotoData.Bitmap -> encode(photo.bitmap) to "${photo.bitmap.width}x${photo.bitmap.height}"
         is PhotoData.HEIC -> {
           val buf = photo.data.duplicate().apply { rewind() }
           val bytes = ByteArray(buf.remaining()).also { buf.get(it) }
-          decodeUpright(bytes)?.let { bmp -> encode(bmp).also { bmp.recycle() } }
+          decodeUpright(bytes)?.let { bmp -> (encode(bmp) to "${bmp.width}x${bmp.height}").also { bmp.recycle() } }
         }
       }
 

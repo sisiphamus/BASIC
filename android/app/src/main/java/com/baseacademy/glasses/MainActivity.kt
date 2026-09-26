@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
     x.getString("mode")?.let { Settings.mode = it }
     if (x.containsKey("mock")) Settings.mock = x.getBoolean("mock")
     if (x.containsKey("interval")) Settings.intervalMs = x.getInt("interval").toLong()
+    x.getString("voice")?.let { Settings.voiceRoute = it }
     if (x.getBoolean("newjob", false)) {
       Settings.sessionId = null
       if (Pipeline.status.value.running) Pipeline.newJob()
@@ -132,6 +133,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
   var mode by remember { mutableStateOf(Settings.mode) }
   var mock by remember { mutableStateOf(Settings.mock) }
   var autoStart by remember { mutableStateOf(Settings.autoStart) }
+  var callAudio by remember { mutableStateOf(Settings.voiceRoute == Settings.ROUTE_CALL) }
   var jobs by remember { mutableStateOf(listOf<Pair<String, String>>()) }
   var serverNote by remember { mutableStateOf("") }
 
@@ -142,6 +144,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
     Settings.mode = mode
     Settings.mock = mock
     Settings.autoStart = autoStart
+    Settings.voiceRoute = if (callAudio) Settings.ROUTE_CALL else Settings.ROUTE_PAUSE
   }
 
   suspend fun checkServer() {
@@ -197,6 +200,8 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
     }
     Toggle("Start automatically when the app opens", autoStart) { autoStart = it }
     Toggle("Test without glasses (simulated glasses)", mock) { mock = it }
+    Toggle("Keep camera on while talking (phone-call audio)", callAudio) { callAudio = it }
+    Text("Off (recommended): the camera pauses for a moment while the glasses talk, because the glasses mute normal audio during camera use. Turn on only if voice doesn't come through.", fontSize = 13.sp, color = Color(0xFF555B66))
     if (!mock && status.registration != "REGISTERED") BigButton("Connect glasses (one time)", Color.White, onConnectGlasses)
     BigButton("Start", HiVis) {
       save()
@@ -214,7 +219,9 @@ private fun Live(s: Status) {
     Line("Glasses", if (s.glasses) "connected" else "waiting for glasses", s.glasses)
     Line("Camera", s.stream.lowercase().replace('_', ' '), s.stream == "STREAMING")
     Line("Server", if (s.serverSession != null) "job running, voice ${s.socket}" else "not started", s.serverSession != null && s.socket == "live")
-    Line("Photos sent", if (s.photos > 0) "${s.photos} · last ${s.lastPhotoKb} KB · ${s.lastRoundTripMs} ms" else "0", s.photos > 0)
+    Line("Photos sent", if (s.photos > 0) "${s.photos} · ${s.lastPhotoSize} · ${s.lastPhotoKb} KB" else "0", s.photos > 0)
+    if (s.photos > 0) Line("Timing", "capture ${s.lastCaptureMs} ms · total ${s.lastRoundTripMs} ms", true)
+    if (s.talking) Line("Voice", "camera paused while talking", true)
     Spacer(Modifier.height(6.dp))
     if (s.stepCount > 0) {
       Text("Step ${s.stepNo} of ${s.stepCount}", color = Color(0xFF555B66), fontWeight = FontWeight.SemiBold)

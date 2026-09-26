@@ -41,6 +41,18 @@ object Settings {
     get() = prefs.getLong("interval", 2000L)
     set(v) = prefs.edit().putLong("interval", v.coerceIn(500L, 30_000L)).apply()
 
+  const val ROUTE_PAUSE = "pause-camera"
+  const val ROUTE_CALL = "call-audio"
+
+  /**
+   * How speech reaches the glasses. The glasses mute media audio while the camera streams, so by
+   * default the camera pauses while a line plays. "call-audio" keeps the camera on and speaks over
+   * the Bluetooth call channel instead (lower quality, riskier on some phones).
+   */
+  var voiceRoute: String
+    get() = prefs.getString("voice", ROUTE_PAUSE)!!
+    set(v) = prefs.edit().putString("voice", if (v == ROUTE_CALL) ROUTE_CALL else ROUTE_PAUSE).apply()
+
   /** The server job this phone is working on, so a reconnect continues it. */
   var sessionId: String?
     get() = prefs.getString("session", null)

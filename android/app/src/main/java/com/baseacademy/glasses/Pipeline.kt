@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -40,6 +41,7 @@ data class Status(
     val glasses: Boolean = false,
     val session: String = "none",
     val stream: String = "none",
+    val talking: Boolean = false,
     val needsCameraPermission: Boolean = false,
     val serverSession: String? = null,
     val job: String = "",
@@ -49,6 +51,8 @@ data class Status(
     val jobStatus: String = "",
     val photos: Int = 0,
     val lastPhotoKb: Int = 0,
+    val lastPhotoSize: String = "",
+    val lastCaptureMs: Long = 0,
     val lastRoundTripMs: Long = 0,
     val lastSaid: String = "",
     val lastSaidFrom: String = "",
@@ -59,11 +63,15 @@ data class Status(
 /**
  * The whole loop, owned by [GlassesService] so it keeps running with the screen off:
  * glasses appear -> device session -> camera stream -> every N seconds capturePhoto() ->
- * full-res JPEG -> POST to the server -> spoken replies arrive over the socket -> text-to-speech,
- * which Android plays through the glasses.
+ * JPEG -> POST to the server -> spoken replies arrive over the socket -> text-to-speech in the glasses.
+ *
+ * Talking pauses the camera (see [Speaker]): the glasses mute media audio while streaming.
  */
 object Pipeline {
   private const val TAG = "BA-Pipeline"
+  private const val WARM_UP_MS = 1000L // first frames after a (re)start are unreliable
+  private const val CAPTURE_TIMEOUT_MS = 6000L
+  private const val STALL_MS = 15_000L
 
   private val _status = MutableStateFlow(Status())
   val status: StateFlow<Status> = _status.asStateFlow()
@@ -77,20 +85,29 @@ object Pipeline {
   private var session: DeviceSession? = null
   private var camera: Camera? = null
   private var stream: Stream? = null
+  private var streamingSince = 0L
+  private var cameraWantedSince = 0L
   private var loopJob: Job? = null
-  private var streamJobs = mutableListOf<Job>()
-  private var sessionJobs = mutableListOf<Job>()
+  private val streamJobs = mutableListOf<Job>()
+  private val sessionJobs = mutableListOf<Job>()
   private var socket: WebSocket? = null
   private var socketWanted = false
   private var socketTries = 0
   private var glassesPresent = false
+  private var talking = false // audio window: camera stopped so the glasses can speak
 
   fun start(context: Context) {
     if (scope != null) return
     appContext = context.applicationContext
     val s = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     scope = s
-    speaker = Speaker(appContext) { text -> Log.i(TAG, "speaking: $text") }
+    speaker =
+        Speaker(
+            appContext,
+            onSpoken = { text -> Log.i(TAG, "speaking: $text") },
+            onNeedAudio = { openAudioWindow() },
+            onAudioDone = { closeAudioWindow() },
+        )
     _status.update { Status(running = true) }
     s.launch {
       if (Settings.mock) {
@@ -100,6 +117,7 @@ object Pipeline {
       }
       selector = AutoDeviceSelector()
       watch()
+      watchdog()
     }
   }
 
@@ -109,6 +127,9 @@ object Pipeline {
     closeSocket()
     session?.stop()
     session = null
+    camera = null
+    stream = null
+    talking = false
     scope = null
     s.cancel()
     if (Settings.mock) Mock.tearDown(appContext)
@@ -120,8 +141,9 @@ object Pipeline {
   fun newJob() {
     Settings.sessionId = null
     closeSocket()
+    stopLoop()
     _status.update { it.copy(serverSession = null, step = "", stepNo = 0, stepCount = 0, jobStatus = "", photos = 0) }
-    if (stream != null && loopJob?.isActive != true) startLoop()
+    if (stream != null && _status.value.stream == StreamState.STREAMING.name) startLoop()
   }
 
   fun sendCommand(cmd: String) {
@@ -160,7 +182,7 @@ object Pipeline {
             created.state.collect { state ->
               _status.update { it.copy(session = state.name) }
               when (state) {
-                DeviceSessionState.STARTED -> addCamera(created)
+                DeviceSessionState.STARTED -> if (!talking) addCamera(created)
                 DeviceSessionState.STOPPED -> onSessionStopped()
                 else -> Unit
               }
@@ -185,6 +207,7 @@ object Pipeline {
     stream = null
     session = null
     _status.update { it.copy(stream = "none") }
+    if (talking) speaker.release() // don't leave queued lines waiting on a camera that's gone
     retryConnect()
   }
 
@@ -196,7 +219,7 @@ object Pipeline {
   }
 
   private suspend fun addCamera(s: DeviceSession) {
-    if (camera != null) return
+    if (camera != null || talking) return
     var granted = false
     Wearables.checkPermissionStatus(Permission.CAMERA)
         .onSuccess { status -> granted = status == PermissionStatus.Granted }
@@ -206,7 +229,9 @@ object Pipeline {
       fail("Open Base Academy and tap Allow glasses camera")
       return
     }
-    // The stream only keeps the camera awake; the real pictures come from capturePhoto().
+    if (camera != null || talking) return // re-check after the suspend
+    cameraWantedSince = SystemClock.elapsedRealtime()
+    // The stream keeps the camera awake; the pictures come from capturePhoto().
     s.addCamera(StreamConfiguration(videoQuality = VideoQuality.LOW, frameRate = 2))
         .onSuccess { cam ->
           camera = cam
@@ -224,28 +249,99 @@ object Pipeline {
               val terminal = state == StreamState.STOPPED || state == StreamState.CLOSED
               if (!terminal) wasActive = true
               when {
-                state == StreamState.STREAMING -> startLoop()
+                state == StreamState.STREAMING -> {
+                  streamingSince = SystemClock.elapsedRealtime()
+                  startLoop()
+                }
                 terminal && wasActive -> {
                   wasActive = false
-                  stopLoop()
-                  if (camera === cam) {
-                    camera = null
-                    stream = null
-                    runCatching { s.removeCamera() }
-                    // try again if the session is still up (e.g. the stream dropped)
-                    scope?.launch {
-                      delay(2000)
-                      if (session === s && s.state.value == DeviceSessionState.STARTED) addCamera(s)
-                    }
-                  }
+                  if (camera === cam) onCameraGone(s)
                 }
-                else -> Unit
               }
             }
           }
           st.start().onFailure { error, _ -> fail("Glasses camera did not start: ${error.description}") }
         }
         .onFailure { error, _ -> fail("Could not open the glasses camera: ${error.description}") }
+  }
+
+  /** The camera stream ended: either we stopped it to talk, or it dropped. */
+  private fun onCameraGone(s: DeviceSession) {
+    stopLoop()
+    streamJobs.forEach { it.cancel() }
+    streamJobs.clear()
+    camera = null
+    stream = null
+    runCatching { s.removeCamera() } // required before the next addCamera()
+    if (talking) {
+      speaker.release()
+    } else {
+      scope?.launch {
+        delay(1500)
+        if (session === s && s.state.value == DeviceSessionState.STARTED && !talking) addCamera(s)
+      }
+    }
+  }
+
+  // ---- talking: pause the camera so the glasses can play audio -------------
+
+  private fun openAudioWindow() {
+    if (talking) return
+    talking = true
+    _status.update { it.copy(talking = true) }
+    stopLoop()
+    val cam = camera
+    if (cam == null) {
+      speaker.release()
+      return
+    }
+    cam.stop() // stream goes STOPPED/CLOSED -> onCameraGone -> speaker.release()
+    scope?.launch {
+      delay(2000) // never let a stuck stop hold the voice back
+      if (talking && camera === cam) {
+        val s = session
+        camera = null
+        stream = null
+        streamJobs.forEach { it.cancel() }
+        streamJobs.clear()
+        if (s != null) runCatching { s.removeCamera() }
+        speaker.release()
+      }
+    }
+  }
+
+  private fun closeAudioWindow() {
+    talking = false
+    _status.update { it.copy(talking = false) }
+    val s = session ?: return
+    scope?.launch {
+      delay(300)
+      if (!talking && session === s && s.state.value == DeviceSessionState.STARTED) addCamera(s)
+    }
+  }
+
+  /** If the camera should be streaming but hasn't for a while, start it over. */
+  private fun watchdog() {
+    scope?.launch {
+      while (isActive) {
+        delay(5000)
+        val s = session ?: continue
+        if (talking || s.state.value != DeviceSessionState.STARTED) continue
+        val streaming = _status.value.stream == StreamState.STREAMING.name || _status.value.stream == StreamState.PAUSED.name
+        val since = SystemClock.elapsedRealtime() - cameraWantedSince
+        if (!streaming && since > STALL_MS) {
+          Log.w(TAG, "camera stalled in ${_status.value.stream}; restarting it")
+          cameraWantedSince = SystemClock.elapsedRealtime()
+          val cam = camera
+          if (cam != null) {
+            onCameraGone(s)
+            runCatching { cam.stop() }
+          } else {
+            addCamera(s)
+          }
+        }
+      }
+    }
   }
 
   // ---- the photo loop ------------------------------------------------------
@@ -260,17 +356,37 @@ object Pipeline {
       while (isActive) {
         val started = SystemClock.elapsedRealtime()
         val st = stream ?: break
+        val warm = WARM_UP_MS - (started - streamingSince)
+        if (warm > 0) {
+          delay(warm)
+          continue
+        }
+        if (talking || speaker.busy) {
+          delay(200)
+          continue
+        }
         if (Settings.mock) Mock.prepareShot(_status.value.stepNo.coerceAtLeast(1))
         var jpeg: ByteArray? = null
-        st.capturePhoto()
-            .onSuccess { photo -> jpeg = withContext(Dispatchers.Default) { Photos.toJpeg(photo) } }
-            .onFailure { error, _ -> Log.w(TAG, "capture failed: ${error.description}") }
+        var size = ""
+        val captured =
+            withTimeoutOrNull(CAPTURE_TIMEOUT_MS) {
+              st.capturePhoto()
+                  .onSuccess { photo ->
+                    val out = withContext(Dispatchers.Default) { Photos.toJpeg(photo) }
+                    jpeg = out?.first
+                    size = out?.second.orEmpty()
+                  }
+                  .onFailure { error, _ -> Log.w(TAG, "capture failed: ${error.description}") }
+            }
+        if (captured == null) Log.w(TAG, "capture timed out")
+        val captureMs = SystemClock.elapsedRealtime() - started
         val bytes = jpeg
         if (bytes == null) {
           failures += 1
-          if (failures >= 3) fail("Glasses photos are failing. Is the stream paused? Tap the glasses to resume.")
+          if (failures >= 3) fail("Glasses photos are failing. If you tapped the glasses, tap again to resume.")
         } else {
           failures = 0
+          _status.update { it.copy(lastCaptureMs = captureMs, lastPhotoSize = size) }
           upload(id, bytes, started)
           if (_status.value.jobStatus == "complete" || _status.value.jobStatus == "ended") break
         }
@@ -296,11 +412,13 @@ object Pipeline {
       }
     } catch (e: ServerError) {
       if (e.code == 404) {
-        // the job was cleared on the server; start a fresh one next round
+        // the job was cleared on the server; start a fresh one
         Settings.sessionId = null
         fail("Job not found on the server, starting a new one")
-        stopLoop()
-        startLoop()
+        scope?.launch {
+          stopLoop()
+          startLoop()
+        }
       } else {
         fail("Upload refused: ${e.message}")
       }
@@ -378,12 +496,12 @@ object Pipeline {
   }
 
   private fun dropped(ws: WebSocket, id: String) {
-    if (socket !== ws) return
-    socket = null
-    _status.update { it.copy(socket = "reconnecting") }
-    if (!socketWanted) return
-    socketTries += 1
     scope?.launch {
+      if (socket !== ws) return@launch
+      socket = null
+      _status.update { it.copy(socket = "reconnecting") }
+      if (!socketWanted) return@launch
+      socketTries += 1
       delay((500L shl socketTries.coerceAtMost(4)).coerceAtMost(8000))
       if (socketWanted && Settings.sessionId == id) openSocket(id)
     }
