@@ -77,7 +77,7 @@ export function createApp({ service, playbooks, provider, hub, staticDir, info =
         buf = Buffer.from(b64, 'base64');
       }
       if (!buf || !buf.length) throw new HttpError(400, 'send the frame as an image body');
-      return service.ingestFrame(req.params.id, buf);
+      return service.ingestFrame(req.params.id, buf, { ip: req.ip, ua: req.get('user-agent') || '' });
     }),
   );
   app.get('/api/sessions/:id/frames', wrap((req) => {

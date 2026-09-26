@@ -94,14 +94,20 @@ function render(r) {
       st.bytes += r.bytes;
       st.lastFrameAt = Date.parse(r.t);
       st.firstFrameAt ??= st.lastFrameAt;
-      line(`${T}  ${K('frame')}${V('#' + r.frameId)}  ${D(`${r.width || '?'}×${r.height || '?'}  ${(r.bytes / 1024).toFixed(0)} KB  ${r.sha256.slice(0, 8)}  ${r.queue.split(',')[0]}`)}`);
+      line(`${T}  ${K('frame')}${V('#' + r.frameId)}  ${D(`${r.width || '?'}×${r.height || '?'} ${r.megapixels ?? ''}MP  q${r.jpegQuality ?? '?'}  ${(r.bytes / 1024).toFixed(0)} KB  Δt ${r.intervalMs ?? '—'} ms  sha ${r.sha256.slice(0, 8)}  ${r.queue.split(',')[0]}${r.supersededTotal ? `  superseded ${r.supersededTotal}` : ''}`)}`);
+      break;
+    case 'vision.stats':
+      line(`${T}  ${K('image')}${D(`luma ${r.lumaMean} (${r.exposure})  contrast ${r.contrast}  sharpness ${r.sharpness}  rgb ${r.avgRGB.join('/')}  dhash ${r.dhash}  Δscene ${r.sceneDelta ?? '—'}/64 ${r.sceneChange}  ${r.statsMs} ms`)}`);
+      break;
+    case 'system.heartbeat':
+      line(`${T}  ${K('system')}${D(`rss ${r.rssMB} MB  heap ${r.heapMB} MB  load ${r.load1}/${r.cpus}  glasses ${r.glassesOnline ? 'online' : 'offline'}  sockets ${r.clients ? r.clients.glasses + 'g/' + r.clients.dashboards + 'd' : '?'}  frames ${r.frames}  analyses ${r.analyses}  errors ${r.modelErrors}  avg ${r.rollingAvgMs ?? '—'} ms  model ${r.modelBusy ? 'busy' : 'idle'}`)}`);
       break;
     case 'vision.qr':
       line(`${T}  ${K('qr')}${r.result ? c.green + r.result + c.reset : D('no code resolved')}  ${D(r.ms + ' ms')}`);
       break;
     case 'model.request':
       if (r.model && r.model !== 'sonnet') st.model = r.model;
-      line(`${T}  ${K('request')}${D(`${r.model} · image ${(r.imageBytes / 1024).toFixed(0)} KB · prompt ${r.promptChars} ch · ${r.rulesActive} rules`)}`);
+      line(`${T}  ${K('request')}${D(`${r.model} · ~${r.estImageTokens ?? '?'} img tok + ~${r.estPromptTokens ?? '?'} text tok · prompt ${r.promptChars} ch · rules [${Array.isArray(r.rulesActive) ? r.rulesActive.join(', ') : r.rulesActive}] · queued ${r.queueWaitMs ?? 0} ms · ${r.settings ? Object.entries(r.settings).map(([k, v]) => k + '=' + v).join(' ') : ''}`)}`);
       if (VERBOSE) block(String(r.prompt || ''));
       break;
     case 'model.response': {
@@ -112,17 +118,19 @@ function render(r) {
       if (s.status === 'pass') st.pass += 1;
       else if (s.status === 'fail') st.fail += 1;
       else st.unclear += 1;
-      line(`${T}  ${K('model')}${verdictColor(s.status)}${String(s.status).padEnd(8)}${c.reset}${V(Number(s.confidence).toFixed(2))}  ${D((r.latencyMs / 1000).toFixed(2) + 's')}  ${D(s.evidence || '')}`);
+      const u = r.usage || {};
+      const tok = u.input_tokens != null ? `in ${u.input_tokens}${u.cache_read_input_tokens ? '+' + u.cache_read_input_tokens + 'c' : ''} out ${u.output_tokens}` : u.promptTokenCount != null ? `in ${u.promptTokenCount} out ${u.candidatesTokenCount}` : '';
+      line(`${T}  ${K('model')}${verdictColor(s.status)}${String(s.status).padEnd(8)}${c.reset}${V(Number(s.confidence).toFixed(2))}  ${D(`${(r.latencyMs / 1000).toFixed(2)}s  avg ${r.rollingAvgMs ?? '—'} ms  ${tok}${r.costUsd ? '  $' + r.costUsd.toFixed(4) : ''}  ${r.rawChars ?? '?'} ch`)}  ${D(s.evidence || '')}`);
       if (VERBOSE) block(JSON.stringify(r.parsed, null, 2));
       else line(`${IND}${c.dim}${trunc(JSON.stringify(r.parsed), cols - IND.length - 1)}${c.reset}`);
       break;
     }
     case 'engine.decision':
-      line(`${T}  ${K('control')}${D(`${r.confidence} ${r.gatePassed ? '≥' : '<'} ${r.gate}`)}  ${r.advanced ? c.hivis + `advance → step ${r.stepAfter}` + c.reset : D('hold')}${r.rulesHit.length ? `  ${c.red}${r.rulesHit.join(', ')}${c.reset}` : ''}`);
+      line(`${T}  ${K('control')}${D(`${r.confidence} ${r.gatePassed ? '≥' : '<'} ${r.gate}`)}  ${r.advanced ? c.hivis + `advance → step ${r.stepAfter}` + c.reset : D('hold')}  ${D(`on step ${r.timeOnStepMs != null ? (r.timeOnStepMs / 1000).toFixed(1) + 's' : '—'}  unclear streak ${r.unclearStreak ?? 0}  fails ${r.failsOnStep ?? 0}  ${r.stepsPassed}/${r.stepsTotal} passed`)}${r.rulesHit.length ? `  ${c.red}${r.rulesHit.join(', ')}${c.reset}` : ''}`);
       break;
     case 'speech.out':
       st.spoken += 1;
-      line(`${T}  ${K('speak')}${r.source === 'supervisor' ? c.hivis : c.white}“${r.text}”${c.reset}  ${D(r.source)}`);
+      line(`${T}  ${K('speak')}${r.source === 'supervisor' ? c.hivis : c.white}“${r.text}”${c.reset}  ${D(`${r.source} · ${r.words ?? '?'} words · ~${r.estSpeechMs ? (r.estSpeechMs / 1000).toFixed(1) + 's' : '?'} · HFP`)}`);
       break;
     case 'engine.step.enter':
       st.step = r.title;

@@ -15,6 +15,7 @@ import { PlaybookLibrary } from './playbooks.js';
 import { Service } from './service.js';
 import { Store } from './store.js';
 import { Tracer } from './trace.js';
+import { stopStats } from './imgstats-pool.js';
 import { GeminiProvider } from './providers/gemini.js';
 import { MockProvider } from './providers/mock.js';
 import { ClaudeCliProvider } from './providers/claude-cli.js';
@@ -72,6 +73,8 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
   const hub = new Hub();
   const service = new Service({ store, playbooks, provider, hub, log, tracer: new Tracer(dataDir, hub) });
   service.sweepIdle();
+  const beat = setInterval(() => service.heartbeat(), 5000);
+  beat.unref();
   const sweeper = setInterval(() => service.sweepIdle(), 5 * 60_000);
   sweeper.unref();
 
@@ -114,6 +117,8 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
 
   const close = async () => {
     clearInterval(sweeper);
+    clearInterval(beat);
+    await stopStats();
     store.flush();
     hub.close();
     playbooks.close();

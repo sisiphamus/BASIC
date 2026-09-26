@@ -9,6 +9,9 @@ import { fillTemplate } from './playbooks.js';
 import { MockProvider } from './providers/mock.js';
 import { decodeQr } from './qr.js';
 import { jpegSize, shortHash } from './trace.js';
+import os from 'node:os';
+import { jpegQuality, hamming } from './imgstats.js';
+import { statsAsync } from './imgstats-pool.js';
 
 const STALE_FRAME_MS = 8000;
 const TROUBLE_LINE = "I'm having trouble seeing right now. Keep going carefully. Your supervisor can still see your feed.";
@@ -138,7 +141,10 @@ export class Service {
 
   dispatch(s, actions) {
     for (const a of actions) {
-      if (a.type === 'say') this.trace(s.id, 'speech.out', { text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, route: 'glasses (Bluetooth HFP)', chars: a.text.length });
+      if (a.type === 'say') {
+        const words = a.text.split(/\s+/).filter(Boolean).length;
+        this.trace(s.id, 'speech.out', { text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, route: 'glasses (Bluetooth HFP/SCO)', tts: 'Android TextToSpeech, rate 0.9', chars: a.text.length, words, estSpeechMs: Math.round((words / 2.4) * 1000) });
+      }
       else if (a.type === 'event') this.trace(s.id, `engine.${a.event}`, { ...a, type: undefined });
       if (a.type === 'say') {
         const say = { id: `${this.bootId}-${s.id.slice(0, 8)}-${++this.sayCounter}`, text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, ts: Date.now() };
@@ -200,7 +206,7 @@ export class Service {
 
   // ---- frames --------------------------------------------------------------
 
-  ingestFrame(id, buf) {
+  ingestFrame(id, buf, meta = {}) {
     const s = this.must(id);
     const mime = sniffImage(buf);
     if (!mime) throw new HttpError(415, 'frame must be a JPEG, PNG or WebP image');
@@ -210,7 +216,24 @@ export class Service {
     const frameId = this.store.saveFrame(id, buf, keep);
     const dims = jpegSize(buf);
     const rtNow = this.rt(id);
-    this.trace(id, 'frame.in', { frameId, bytes: buf.length, mime, width: dims?.width, height: dims?.height, sha256: shortHash(buf), step: s.steps[s.current].id, stepNo: s.current + 1, queue: rtNow.busy ? (rtNow.pending ? 'busy, replacing pending frame' : 'busy, queued as newest') : 'idle, analyzing now' });
+    const nowMs = Date.now();
+    const intervalMs = rtNow.lastFrameAt ? nowMs - rtNow.lastFrameAt : null;
+    rtNow.lastFrameAt = nowMs;
+    if (rtNow.busy && rtNow.pending) rtNow.superseded = (rtNow.superseded || 0) + 1;
+    this.trace(id, 'frame.in', {
+      frameId, bytes: buf.length, mime, width: dims?.width, height: dims?.height, megapixels: dims ? +((dims.width * dims.height) / 1e6).toFixed(2) : null,
+      jpegQuality: jpegQuality(buf), sha256: shortHash(buf), intervalMs, fps: intervalMs ? +(1000 / intervalMs).toFixed(2) : null,
+      step: s.steps[s.current].id, stepNo: s.current + 1, framesTotal: s.frames + 1, supersededTotal: rtNow.superseded || 0,
+      queue: rtNow.busy ? (rtNow.pending ? 'busy, replacing pending frame' : 'busy, queued as newest') : 'idle, analyzing now',
+      source: { ip: meta.ip || null, client: meta.ua || null, device: 'RB Meta 0KD9 via Meta DAT 1.0', transport: 'HTTP POST image/jpeg' },
+    });
+    // Image statistics off the hot path, so they never delay coaching.
+    statsAsync(buf).then((stats) => {
+      if (!stats) return;
+      const dist = hamming(rtNow.lastHash, stats.dhash);
+      rtNow.lastHash = stats.dhash;
+      this.trace(id, 'vision.stats', { frameId, ...stats, sceneDelta: dist, sceneChange: dist == null ? 'first frame' : dist > 24 ? 'new view' : dist > 10 ? 'moving' : 'steady' });
+    });
     s.frames += 1;
     s.updatedAt = Date.now();
     s.lastFrameAt = s.updatedAt;
@@ -264,9 +287,18 @@ export class Service {
       const model = s.simulated ? this.simProvider : this.provider;
       const userPrompt = buildUserPrompt(s, { qr });
       const md = model.describe?.() || {};
-      this.trace(s.id, 'model.request', { frameId: job.frameId, provider: md.provider, model: md.model, stepId, imageBytes: job.buf.length, systemPromptChars: SYSTEM_PROMPT.length, promptChars: userPrompt.length, prompt: userPrompt, schema: 'scene, step{status,evidence,confidence,coach_line}, rules[]', rulesActive: s.rules.length });
+      const dimsQ = jpegSize(job.buf);
+      const queueWaitMs = Date.now() - job.at;
+      this.trace(s.id, 'model.request', {
+        frameId: job.frameId, provider: md.provider, model: md.model, stepId, imageBytes: job.buf.length,
+        estImageTokens: dimsQ ? Math.round((dimsQ.width * dimsQ.height) / 750) : null, estPromptTokens: Math.round((SYSTEM_PROMPT.length + userPrompt.length) / 4),
+        systemPromptChars: SYSTEM_PROMPT.length, promptChars: userPrompt.length, prompt: userPrompt, check: s.stepDefs[s.current]?.check,
+        schema: 'scene, step{status,evidence,confidence,coach_line}, rules[]', rulesActive: s.rules.map((r) => r.id), queueWaitMs,
+        settings: md.provider === 'claude-cli' ? { effort: 'low', tools: 'none', hooks: 'none', mcp: 'none', session: 'ephemeral' } : { thinking: 'low', schema: 'enforced' },
+      });
       const out = await model.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: userPrompt, schema: RESPONSE_SCHEMA, sessionId: s.id });
-      this.trace(s.id, 'model.response', { frameId: job.frameId, model: out.model, latencyMs: Date.now() - started, raw: out.raw ?? null, parsed: out.result, usage: out.usage ?? null, costUsd: out.costUsd ?? null });
+      r.lat = [...(r.lat || []), Date.now() - started].slice(-20);
+      this.trace(s.id, 'model.response', { frameId: job.frameId, model: out.model, latencyMs: Date.now() - started, modelMs: out.latencyMs ?? null, rawChars: out.raw ? String(out.raw).length : null, raw: out.raw ?? null, parsed: out.result, usage: out.usage ?? null, costUsd: out.costUsd ?? null, rollingAvgMs: Math.round(r.lat.reduce((a, b) => a + b, 0) / r.lat.length) });
       const result = out.result || {};
       result.step = { ...(result.step || {}), id: stepId };
       r.consecutiveErrors = 0;
@@ -289,7 +321,8 @@ export class Service {
       const before = s.current;
       const minConf = s.stepDefs[s.current]?.min_confidence ?? 0.6;
       const actions = applyAnalysis(s, result, { now: Date.now(), frameId: job.frameId });
-      this.trace(s.id, 'engine.decision', { frameId: job.frameId, stepId, status: result.step.status, confidence: result.step.confidence, gate: minConf, gatePassed: result.step.confidence >= minConf, stepBefore: before + 1, stepAfter: s.current + 1, advanced: s.current !== before, rulesHit: (result.rules || []).map((x) => x.id), spoken: actions.filter((a) => a.type === 'say').length });
+      const stB = s.steps[before];
+      this.trace(s.id, 'engine.decision', { frameId: job.frameId, stepId, status: result.step.status, confidence: result.step.confidence, gate: minConf, gatePassed: result.step.confidence >= minConf, stepBefore: before + 1, stepAfter: s.current + 1, advanced: s.current !== before, rulesHit: (result.rules || []).map((x) => x.id), spoken: actions.filter((a) => a.type === 'say').length, timeOnStepMs: stB?.startedAt ? Date.now() - stB.startedAt : null, unclearStreak: stB?.unclearStreak ?? null, failsOnStep: stB?.fails ?? null, helped: stB?.helped ?? null, stepsPassed: s.steps.filter((x) => x.status === 'pass').length, stepsTotal: s.steps.length });
       this.dispatch(s, actions);
     } catch (e) {
       r.consecutiveErrors += 1;
@@ -305,6 +338,22 @@ export class Service {
         actions.push({ type: 'say', text: TROUBLE_LINE, source: 'system', interrupt: false, stepId });
       }
       this.dispatch(s, actions);
+    }
+  }
+
+  /** Every few seconds: system and link health for active crews, for the telemetry log. */
+  heartbeat() {
+    const now = Date.now();
+    const mem = process.memoryUsage();
+    for (const s of this.store.all()) {
+      if (s.status !== 'active' || now - s.updatedAt > 60_000) continue;
+      const r = this.rt(s.id);
+      this.trace(s.id, 'system.heartbeat', {
+        rssMB: Math.round(mem.rss / 1e6), heapMB: Math.round(mem.heapUsed / 1e6), load1: +os.loadavg()[0].toFixed(2), cpus: os.cpus().length, uptimeS: Math.round(process.uptime()),
+        clients: this.hub?.counts() ?? null, glassesOnline: this.hub ? this.hub.glassesOnline(s.id) : false, modelBusy: Boolean(r.busy), pendingFrame: Boolean(r.pending),
+        frames: s.frames, analyses: s.analyses, modelErrors: s.modelErrors, rollingAvgMs: r.lat?.length ? Math.round(r.lat.reduce((a, b) => a + b, 0) / r.lat.length) : null,
+        step: `${s.current + 1}/${s.steps.length}`,
+      });
     }
   }
 
