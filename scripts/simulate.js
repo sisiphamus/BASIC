@@ -10,8 +10,8 @@
 // ("03-...") are sent while the crew is on that step, so a real model can pass them;
 // "00-..." files are general site shots mixed in.
 //
-// With a real Gemini key the model will judge these images for real; with the mock model
-// crews walk through their jobs on their own.
+// Simulated crews use the built-in walkthrough model so they never eat your Gemini quota.
+// Add --real-model to have Gemini judge the photos for real.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -31,6 +31,7 @@ const LOOP = Boolean(opt('loop', false));
 const DURATION_S = Number(opt('duration', 0));
 const PLAYBOOK = opt('playbook', null);
 const IMAGES = opt('images', null);
+const REAL_MODEL = Boolean(opt('real-model', false)); // default: simulated crews use the free walkthrough model
 
 const NAMES = ['Marcus Webb', 'Ana Ruiz', 'Tom Hale', 'Dee Okafor', 'Luis Carrillo', 'Priya Shah', 'Jake Moreno', 'Kim Tran', 'Sam Ortiz', 'Riley Hayes', 'Omar Haddad', 'Grace Lin'];
 const ADDRESSES = ['2305 Goldsmith St, Houston', '118 Pawnee Ave, Austin', '4410 Rosedale Ave, Austin', '903 W Mary St, Austin', '7702 Cooper Ln, Austin', '2201 Bissonnet St, Houston', '51 Oak Hollow Dr, Round Rock', '1809 Palma Plaza, Austin'];
@@ -71,7 +72,7 @@ async function crew(i, playbooks) {
   do {
     const pb = PLAYBOOK || playbooks[i % playbooks.length];
     const mode = i % 3 === 2 ? 'trainee' : 'crew';
-    const s = await api('POST', '/api/sessions', JSON.stringify({ playbookId: pb, worker: name, mode, job: { address: ADDRESSES[i % ADDRESSES.length] } }), { 'content-type': 'application/json' });
+    const s = await api('POST', '/api/sessions', JSON.stringify({ playbookId: pb, worker: name, mode, simulated: !REAL_MODEL, job: { address: ADDRESSES[i % ADDRESSES.length] } }), { 'content-type': 'application/json' });
     stats.jobs += 1;
     const images = imagesFor(pb);
     let n = i; // stagger which image each crew starts on

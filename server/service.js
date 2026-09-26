@@ -6,6 +6,7 @@ import { createSession, applyAnalysis, applyCommand, supervisorSay, addRule, rem
 import { SYSTEM_PROMPT, RESPONSE_SCHEMA, buildUserPrompt } from './prompt.js';
 import { parseRuleText, ruleIdFrom } from './rule-text.js';
 import { fillTemplate } from './playbooks.js';
+import { MockProvider } from './providers/mock.js';
 
 const STALE_FRAME_MS = 8000;
 const TROUBLE_LINE = "I'm having trouble seeing right now. Keep going carefully. Your supervisor can still see your feed.";
@@ -30,6 +31,8 @@ export class Service {
     this.store = store;
     this.playbooks = playbooks;
     this.provider = provider;
+    // Simulated crews (the demo wall) never spend real model quota.
+    this.simProvider = provider instanceof MockProvider ? provider : new MockProvider({ delayMs: 700 });
     this.hub = hub;
     this.log = log;
     this.runtime = new Map();
@@ -66,6 +69,7 @@ export class Service {
       status: s.status,
       worker: s.worker,
       mode: s.mode,
+      simulated: Boolean(s.simulated),
       playbookId: s.playbookId,
       playbookTitle: s.playbookTitle,
       frameIntervalMs: s.frameIntervalMs,
@@ -143,7 +147,7 @@ export class Service {
 
   // ---- sessions ------------------------------------------------------------
 
-  startSession({ playbookId, worker, mode, job } = {}) {
+  startSession({ playbookId, worker, mode, job, simulated } = {}) {
     const playbook = this.playbooks.get(playbookId);
     if (!playbook) throw new HttpError(400, `unknown playbook "${playbookId}"`);
     const name = String(worker || '').trim();
@@ -154,6 +158,7 @@ export class Service {
       if (/^[a-z0-9_]{1,40}$/i.test(k) && ['string', 'number', 'boolean'].includes(typeof v)) cleanJob[k] = typeof v === 'string' ? v.slice(0, 200) : v;
     }
     const { session, actions } = createSession({ playbook, worker: name, mode, job: cleanJob, id: crypto.randomUUID() });
+    session.simulated = simulated === true;
     this.store.add(session);
     this.dispatch(session, [{ type: 'event', event: 'session.started', worker: session.worker, playbookId: session.playbookId, mode: session.mode }, ...actions]);
     this.log(`session ${session.id.slice(0, 8)} started: ${session.worker} / ${session.playbookId} (${session.mode})`);
@@ -238,7 +243,8 @@ export class Service {
     const stepId = s.steps[s.current].id;
     const started = Date.now();
     try {
-      const out = await this.provider.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: buildUserPrompt(s), schema: RESPONSE_SCHEMA, sessionId: s.id });
+      const model = s.simulated ? this.simProvider : this.provider;
+      const out = await model.analyze({ image: job.buf, mime: job.mime, system: SYSTEM_PROMPT, user: buildUserPrompt(s), schema: RESPONSE_SCHEMA, sessionId: s.id });
       const result = out.result || {};
       result.step = { ...(result.step || {}), id: stepId };
       r.consecutiveErrors = 0;

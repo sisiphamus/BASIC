@@ -114,7 +114,7 @@ They apply from the next frame. The supervisor can also rewrite what the current
 npm run simulate -- --crews 5 --loop --images demo-frames/battery-install
 ```
 
-Fake crews post frames through the same API as the glasses, which fills the dashboard wall. Use it for the "one master electrician, five crews" moment. With a real key, Gemini judges those photos, so point `--images` at photos that match the steps.
+Fake crews post photos from `demo-frames/` through the same API as the glasses, which fills the dashboard wall. Use it for the "one master electrician, five crews" moment. Simulated crews always run on the built-in walkthrough model, even when a Gemini key is set, so they never eat quota or slow the real crew. Add `--real-model` to have Gemini judge the photos; each file's number (`03-...`) is the step it's sent for.
 
 ## When something goes wrong
 

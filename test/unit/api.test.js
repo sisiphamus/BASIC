@@ -389,3 +389,24 @@ test('playbook errors read like English', async () => {
   assert.equal(bad.status, 400);
   assert.match(bad.body.error, /steps\.0\.title: can't be empty/);
 });
+
+test('simulated crews never call the real model', async () => {
+  const { GeminiProvider } = await import('../../server/providers/gemini.js');
+  const { Service } = await import('../../server/service.js');
+  let realCalls = 0;
+  const real = new GeminiProvider({ apiKey: 'x' });
+  real.analyze = async () => {
+    realCalls += 1;
+    return { result: r('unclear', 0.2), model: 'real' };
+  };
+  const svc = new Service({ store: srv.store, playbooks: srv.playbooks, provider: real, hub: null });
+  const sim = svc.startSession({ playbookId: 'system-check', worker: 'Sim Sid', simulated: true });
+  const live = svc.startSession({ playbookId: 'system-check', worker: 'Real Rae' });
+  assert.equal(sim.simulated, true);
+  svc.ingestFrame(sim.id, JPEG);
+  await svc.idle(sim.id);
+  assert.equal(realCalls, 0);
+  svc.ingestFrame(live.id, JPEG);
+  await svc.idle(live.id);
+  assert.equal(realCalls, 1);
+});
