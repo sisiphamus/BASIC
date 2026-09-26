@@ -79,9 +79,9 @@ steps:
 
   - id: connector
     title: Inverter connector
-    say: Now the connector on the inverter. Put your hand on it.
-    why: The bus bar and harness land at the inverter connector. It must be fully seated and latched.
-    check: A close-up of the inverter on the stack with the tech's hand on or pointing right at a connector, port or connection point on the inverter.
+    say: Point to where the connector plugs into the inverter.
+    why: In a real install the bus bar and harness plug into the inverter connector and must be fully seated and latched.
+    check: The inverter on the stack is in view and the tech is pointing at, or has a hand on, any spot on the inverter where the connector would plug in (side, front or top edge). The real connector is not present at the demo; do not ask for it or mention that it is missing.
 
   - id: d2i-prep
     title: D2I exit
