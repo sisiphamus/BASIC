@@ -1,0 +1,70 @@
+# Visit 2: the install crew sets the Base battery, connects it, and brings it online.
+# Everything in here is plain English. The model reads `check` and `when`;
+# the crew hears `say`, `pass_say`, `fail_say`, `hint` and (in trainee mode) `why`.
+# Values in {braces} come from the job file below or from the session.
+
+id: battery-install
+title: Battery set and commission
+summary: Place the battery with code clearance, level it, seat the connector, label it, and confirm it is online.
+
+job:
+  customer: Ron Swanson
+  address: 2305 Goldsmith St, Houston TX
+  clearance_in: 36
+
+steps:
+  - id: clearance
+    title: Clearance from openings
+    say: Measure from the battery to the nearest window or door. Hold the tape so I can read the number at the frame.
+    why: Fire code keeps home batteries at least {clearance_in} inches from windows and doors so a battery fire cannot get into the house.
+    check: A tape measure runs from the battery (a large box or cabinet) to a window or door frame, and the tape reading at the frame is {clearance_in} inches or more.
+    pass_say: Clearance is good.
+    fail_say: That is under {clearance_in} inches. Slide the battery away from the opening and measure again.
+    hint: I can't read the tape yet. Get closer and hold it steady.
+
+  - id: level
+    title: Battery is level
+    say: Put the level on top of the battery and show me the bubble.
+    why: A battery that is not level stresses the pad and the cable entry, and the inspector will fail it.
+    check: A spirit level sits on top of the battery and its bubble is centered between the two lines.
+    pass_say: Level looks good.
+    fail_say: The bubble is off center. Shim the low side and check again.
+    hint: Bring the level into view, close enough that I can see the bubble.
+
+  - id: connector
+    title: Power connector seated
+    say: Plug in the power connector until it clicks, then show me the connector up close.
+    why: A half-seated connector runs hot and is the most common reason a battery goes into maintenance mode after install.
+    check: The power connector is fully pushed into the battery socket, the latch is closed, and no colored band on the plug is visible.
+    pass_say: Connector is seated.
+    fail_say: The connector is not all the way in. Push until it clicks, so the colored band disappears.
+    hint: Show me the connector up close.
+
+  - id: labels
+    title: Labels on
+    say: Put the Base label and the warning label on the front of the battery, then show me both.
+    why: Code requires the warning label so firefighters know there is stored energy on site.
+    check: Two labels are stuck on the battery front and readable, one says BASE and one is a warning or caution label.
+    pass_say: Both labels are on.
+    fail_say: I only see one label. Both the Base label and the warning label need to be on.
+    hint: Step back a little so I can read both labels.
+
+  - id: online
+    title: Battery online
+    say: Open the Base app and show me the battery status screen.
+    why: The job is not done until the battery reports in. If it stays offline, the customer has no backup.
+    check: A phone or app screen is visible and shows the battery status as Online, connected, or a green ready state.
+    pass_say: Battery is online. Nice work.
+    fail_say: The app does not show online yet. Check the Wi-Fi setup and give it a minute.
+    hint: Hold the phone screen up to the glasses so I can read it.
+
+watch:
+  - id: bare-hands-on-connector
+    when: Bare hands (no gloves) are touching a metal connector, terminal, or exposed cable end.
+    say: Gloves on before you touch the connector.
+    cooldown_s: 30
+
+  - id: pad-obstruction
+    when: A hose, gas meter, AC unit, or bush is right next to the battery pad.
+    say: Something is close to the pad. Check the clearance around it before you continue.
+    cooldown_s: 60

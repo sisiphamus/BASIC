@@ -1,0 +1,60 @@
+# Service visit: the app shows maintenance mode, a tech goes out to bring the battery back.
+
+id: service-visit
+title: Maintenance mode reset
+summary: Read the fault, make the system safe, reseat the connector, and bring the battery back online.
+
+job:
+  customer: Leslie Knope
+  address: 118 Pawnee Ave, Austin TX
+  fault: E-214 connector temperature
+
+steps:
+  - id: read-fault
+    title: Read the fault
+    say: Show me the app screen with the fault code.
+    why: The fault code tells you which part to check first, so you don't pull apart parts that are fine.
+    check: A phone or app screen shows a fault, error, or maintenance code.
+    pass_say: Got the fault code.
+    fail_say: That screen doesn't show a fault code. Open the battery details page.
+    hint: Hold the screen closer so I can read it.
+
+  - id: disconnect-off
+    title: Disconnect off
+    say: Turn the Base disconnect handle to off and show me the handle.
+    why: Never touch the connector while the system is live.
+    check: A disconnect switch or breaker handle is visible and in the OFF position.
+    pass_say: Disconnect is off. Safe to work.
+    fail_say: The handle still looks on. Switch it off before you go any further.
+    hint: Show me the disconnect handle.
+
+  - id: reseat
+    title: Reseat the connector
+    say: Unplug the power connector, check the pins for burn marks, and plug it back in until it clicks.
+    why: Fault {fault} usually means a loose connector heating up.
+    check: The power connector is fully pushed into its socket with the latch closed and no colored band showing.
+    pass_say: Connector is back in.
+    fail_say: It is not fully seated. Push until it clicks.
+    hint: Show me the connector up close.
+
+  - id: disconnect-on
+    title: Disconnect on
+    say: Turn the disconnect back on and show me the handle.
+    check: The disconnect switch or breaker handle is in the ON position.
+    pass_say: Disconnect is on.
+    fail_say: Still off. Turn the handle to on.
+    hint: Show me the disconnect handle.
+
+  - id: online
+    title: Back online
+    say: Show me the app. It should say online within a minute.
+    check: A phone or app screen shows the battery as Online or connected, with no fault showing.
+    pass_say: Back online. Visit complete.
+    fail_say: Still showing a fault. Wait a minute and check again, or call your supervisor.
+    hint: Hold the phone up so I can read the status.
+
+watch:
+  - id: live-work
+    when: Hands are touching the connector or opening a panel while a disconnect handle visible in frame is in the ON position.
+    say: Stop. The disconnect is still on.
+    cooldown_s: 20

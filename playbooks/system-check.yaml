@@ -1,0 +1,36 @@
+# Two-minute test you can run anywhere to prove glasses -> model -> voice works.
+
+id: system-check
+title: Glasses system check
+summary: Three quick things to show the camera. Use this before a demo to test the full loop.
+
+steps:
+  - id: thumbs-up
+    title: Thumbs up
+    say: Give me a thumbs up in front of the glasses.
+    check: A hand is making a thumbs-up gesture.
+    pass_say: I see it.
+    fail_say: That is not a thumbs up yet.
+    hint: Hold your hand out in front of you.
+
+  - id: three-fingers
+    title: Three fingers
+    say: Now hold up three fingers.
+    check: A hand is holding up exactly three fingers.
+    pass_say: Three. Good.
+    fail_say: I count a different number. Hold up exactly three.
+    hint: Hold your hand a bit further from your face.
+
+  - id: screen
+    title: Any screen
+    say: Last one. Look at any phone or laptop screen.
+    check: A phone, tablet, or laptop screen is clearly visible.
+    pass_say: System check complete. Camera, model, and voice all work.
+    fail_say: I don't see a screen.
+    hint: Look straight at the screen.
+
+watch:
+  - id: dark
+    when: The image is almost completely dark or black.
+    say: It's too dark for me to see. Turn toward some light.
+    cooldown_s: 20
