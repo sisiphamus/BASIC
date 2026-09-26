@@ -1,26 +1,29 @@
 # Visit 2, the battery install, in build order with the demo props:
-# stack down, QR scan, mounting studs, inverter (dark gray plastic) on the studs, Disco off,
-# connector on the inverter, D2I corner, metal shell over everything, commissioning,
+# stack down, QR scan, mounting studs, gray top on the studs (where the inverter mounts), Disco off,
+# connection point, D2I corner, metal shell over the gray top, commissioning,
 # grid test, verification, closeout photo.
 # Only the instructions are fixed. Every confirmation, correction and hint is written by the model
 # from what it sees, in the voice described in `context`.
 
 id: base-install
 title: Base battery install (visit 2)
-summary: Stack and QR scan, studs, inverter, Disco off, connector, D2I, metal shell, commissioning, grid test, closeout.
+summary: Stack and QR scan, studs, gray top, Disco off, connection point, D2I, metal shell, commissioning, grid test, closeout.
 frame_interval_ms: 2000
 
 context: >-
   This is a live, filmed hackathon demonstration for Base Power. The tech is setting up a real Base
   battery module stack, but it is NOT at a customer's house: expect a warehouse, yard or showroom,
   no house wall, no pad, no meter. Never fail a step because the house, wall, pad or site is missing;
-  judge only the battery and what the tech is doing. Props at the demo: the module stack, the inverter (a darker gray plastic unit that seats on the
-  four round mounting studs on the stack's top plate and carries the connector), and the metal outer
-  shell that lowers over the stack and inverter last. The order is fixed: studs, then inverter, then
-  connector, then shell; never ask for the studs or the connector once the shell is on. There is no
-  real Disco, bus bar, D2I cable or breaker: for those steps the tech either points at the right spot
-  or shows the matching screen of the Base installer app on a phone. Accept a clear, deliberate
-  pointing action or the matching app screen as done; do not require the real part.
+  judge only the battery and what the tech is doing. Props at the demo: the module stack, a dark gray top that sets on the
+  four round mounting studs on the stack's top plate (it sits where the inverter mounts in a real
+  install), and the metal outer shell that lowers over the gray top last. There is NO inverter and
+  NO connector: never ask for them, never say they are missing; for those steps the tech points at
+  the gray top and you explain what the real part does there. The order is fixed: studs, then gray
+  top, then connection point, then shell; never ask for the studs once the gray top is on, or for
+  anything under the shell once the shell is on. There is no real Disco, bus bar, D2I cable or
+  breaker: for those steps the tech either points at the right spot or shows the matching screen of
+  the Base installer app on a phone. Accept a clear, deliberate pointing action or the matching app
+  screen as done; do not require the real part.
   Keep every spoken line to ONE short sentence, about 12 words or fewer. One instruction at a time.
   Every step ends with a hand signal to the camera (pointing at a spot, a hand placed on a part, or a
   thumbs up). When the part of the step is done but the signal is missing, ask for the signal in
@@ -32,7 +35,7 @@ context: >-
   Be specific and physical: name the part and where it is, using what is actually visible, for example
   the Base spec label on the module face with the QR code in its upper right corner, the UN3480
   lithium battery label, the four round mounting studs on the stack's top plate (where the inverter
-  seats), the inverter's connector, the metal shell's edges. When correcting, say exactly which part to move, where,
+  seats), the gray top, the metal shell's edges. When correcting, say exactly which part to move, where,
   and which way ("turn the label side toward you", "lower the metal shell so its front edge sits flush on
   the front of the stack"). Only name parts you can see or that the step is about.
   Base install facts you may use when relevant: each battery occupies a 3 ft by 3 ft footprint, about
@@ -66,10 +69,10 @@ steps:
     check: The top plate of the uncovered module stack is in view and the tech is pointing at or touching its round mounting studs.
 
   - id: inverter
-    title: Inverter
-    say: Set the dark gray inverter on the studs. Press down so it seats.
-    why: The inverter converts the battery's DC to household AC. It must sit flat on all four studs.
-    check: The darker gray plastic inverter is set on top of the module stack, sitting flat, with the tech's hand placing it or pressing on it (a clearly seated inverter alone also counts).
+    title: Gray top
+    say: Set the gray top on the studs. Press down so it seats.
+    why: The gray top sits where the inverter mounts. In a real install the inverter must sit flat on all four studs.
+    check: The dark gray top is set flat on top of the module stack, with the tech's hand placing it or pressing on it (a clearly seated gray top alone also counts).
 
   - id: disco-off
     title: Disco off
@@ -78,22 +81,22 @@ steps:
     check: The Base installer app pre-check screen shows the Disco OFF (green Disco OFF banner or the lever in the OFF position), or a real disconnect handle clearly in the OFF position.
 
   - id: connector
-    title: Inverter connector
-    say: Point to where the connector plugs into the inverter.
-    why: In a real install the bus bar and harness plug into the inverter connector and must be fully seated and latched.
-    check: The inverter on the stack is in view and the tech is pointing at, or has a hand on, any spot on the inverter where the connector would plug in (side, front or top edge). The real connector is not present at the demo; do not ask for it or mention that it is missing.
+    title: Connection point
+    say: Point to the connection point on the gray top.
+    why: In a real install the bus bar and harness plug into the inverter here and must be fully seated and latched.
+    check: The gray top on the stack is in view and the tech is pointing at, or has a hand on, a spot on it or its edge. There is no inverter or connector at the demo; do not ask for them or say they are missing. On pass, say what connects there in a real install.
 
   - id: d2i-prep
     title: D2I exit
     say: Point to the back corner where the D2I cable exits.
     why: The D2I carries power out to the Disco. It must exit through the shell opening, not get pinched under the shell.
-    check: A corner or back edge of the battery stack or inverter is in view and the tech is pointing at it or has a hand on it.
+    check: A corner or back edge of the battery stack or gray top is in view and the tech is pointing at it or has a hand on it.
 
   - id: metal-shell
     title: Metal shell
-    say: Lower the metal shell over the inverter and stack until it sits flush.
+    say: Lower the metal shell over the gray top until it sits flush.
     why: The metal shell is the outer housing. It is the weather and touch barrier and goes on last, after every connection.
-    check: The metal shell has been lowered over the inverter and module stack and is sitting flush, or the tech is clearly lowering it into place.
+    check: The metal shell has been lowered over the gray top and module stack and is sitting flush, or the tech is clearly lowering it into place.
 
   - id: commission
     title: Commissioning
