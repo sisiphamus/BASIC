@@ -1,0 +1,494 @@
+@import "../theme.css";
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+}
+
+.g-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.g-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.g-screen[hidden] {
+  display: none;
+}
+
+.g-brand h1 {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 8px 0 8px;
+}
+
+.g-brand p {
+  margin: 0;
+  color: var(--color-ink-2);
+  line-height: 1.45;
+  max-width: 44ch;
+}
+
+.g-alert {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--color-hivis);
+  color: var(--color-ink);
+  line-height: 1.4;
+}
+
+.g-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.g-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.g-field > span,
+.g-field > legend {
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.g-field small {
+  color: var(--color-ink-3);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.g-field input,
+.g-field select {
+  font: inherit;
+  font-size: 1.05rem;
+  min-height: 52px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-line-2);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.g-field input:focus-visible,
+.g-field select:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 1px;
+}
+
+.g-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1.5px solid var(--color-line-2);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-panel);
+}
+
+.g-seg label {
+  position: relative;
+  display: block;
+}
+
+.g-seg input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+}
+
+.g-seg span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms var(--ease-out-quint);
+}
+
+.g-seg label + label span {
+  border-left: 1.5px solid var(--color-line-2);
+}
+
+.g-seg input:checked + span {
+  background: var(--color-ink);
+  color: var(--color-panel);
+}
+
+.g-seg input:focus-visible + span {
+  outline: 3px solid var(--color-hivis-deep);
+  outline-offset: -3px;
+}
+
+.g-check {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.g-check input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-ink);
+}
+
+.g-error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--color-fail-soft);
+  color: var(--color-fail);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.g-primary {
+  font: inherit;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.01em;
+  min-height: 60px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-hivis);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: transform 120ms var(--ease-out-quint), background 160ms var(--ease-out-quint);
+}
+
+.g-primary:hover {
+  background: var(--color-hivis-deep);
+}
+
+.g-primary:active {
+  transform: scale(0.985);
+}
+
+.g-primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.g-resume,
+.g-join {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-line);
+}
+
+.g-resume h2,
+.g-join h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.g-resume p,
+.g-join p {
+  margin: 0;
+  color: var(--color-ink-2);
+  line-height: 1.4;
+}
+
+.g-join ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.g-join button {
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-line-2);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+/* ---- live ---- */
+
+.g-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.g-top strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.g-top span:not(.g-conn) {
+  color: var(--color-ink-2);
+  font-size: 0.92rem;
+}
+
+.g-conn {
+  flex: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--color-line);
+  color: var(--color-ink-2);
+}
+
+.g-conn[data-state="online"] {
+  background: var(--color-pass-soft);
+  color: var(--color-pass);
+}
+
+.g-conn[data-state="reconnecting"] {
+  background: var(--color-hivis);
+  color: var(--color-ink);
+}
+
+.g-step p {
+  margin: 0 0 4px;
+  color: var(--color-ink-2);
+  font-weight: 600;
+}
+
+.g-step h2 {
+  margin: 0;
+  font-size: 2.6rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.g-bar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+}
+
+.g-bar li {
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-line);
+}
+
+.g-bar li[data-status="pass"] {
+  background: var(--color-pass);
+}
+
+.g-bar li[data-status="skipped"] {
+  background: var(--color-ink-3);
+}
+
+.g-bar li[data-status="active"] {
+  background: var(--color-ink);
+}
+
+.g-instruction {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.3;
+  font-weight: 500;
+  max-width: 30ch;
+}
+
+.g-said {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-line);
+}
+
+.g-said[hidden] {
+  display: none;
+}
+
+.g-said span {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-ink-2);
+}
+
+.g-said p {
+  margin: 4px 0 0;
+  font-size: 1.1rem;
+  line-height: 1.35;
+}
+
+.g-said[data-source="supervisor"] {
+  background: var(--color-hivis);
+  border-color: var(--color-hivis-deep);
+}
+
+.g-said[data-source="supervisor"] span {
+  color: var(--color-ink);
+}
+
+.g-said[data-source="rule"] {
+  border-color: var(--color-fail);
+}
+
+.g-video {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.g-video[hidden] {
+  display: none;
+}
+
+.g-video video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--color-stage);
+}
+
+.g-video p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-3);
+}
+
+.g-video p[data-bad="true"] {
+  color: var(--color-fail);
+}
+
+.g-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.g-actions button,
+.g-toggles button {
+  font: inherit;
+  font-weight: 600;
+  min-height: 56px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-line-2);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background 140ms var(--ease-out-quint);
+}
+
+.g-actions button:active,
+.g-toggles button:active {
+  background: var(--color-line);
+}
+
+.g-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.g-toggles button {
+  min-height: 48px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.g-toggles button[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-panel);
+  border-color: var(--color-ink);
+}
+
+.g-toggles button[hidden] {
+  display: none;
+}
+
+.g-heard {
+  margin: -8px 0 0;
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  color: var(--color-ink-3);
+}
+
+.g-end {
+  font: inherit;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-fail);
+  background: transparent;
+  color: var(--color-fail);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---- done ---- */
+
+#done h2 {
+  margin: 12px 0 0;
+  font-size: 2.6rem;
+  font-weight: 700;
+}
+
+#done p {
+  margin: 0;
+  color: var(--color-ink-2);
+  line-height: 1.4;
+}
+
+.g-done-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1.5px solid var(--color-line);
+}
+
+.g-done-steps li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1.5px solid var(--color-line);
+}
+
+.g-done-steps em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-ink-3);
+}
+
+.g-done-steps li[data-status="pass"] em {
+  color: var(--color-pass);
+}

@@ -106,7 +106,13 @@ export function createApp({ service, playbooks, provider, hub, staticDir, info =
   // ---- web pages ----
   if (staticDir && fs.existsSync(staticDir)) {
     app.use(express.static(staticDir, { index: false, maxAge: '1h' }));
-    const page = (file) => (req, res) => res.sendFile(path.join(staticDir, file));
+    // `root` keeps the dot-folder check on the URL only, so the app still works if it lives under a hidden folder.
+    const page = (file) => (req, res) => {
+      if (path.extname(req.path)) return res.status(404).type('text').send('not found');
+      if (!fs.existsSync(path.join(staticDir, file))) return res.status(404).type('text').send(`${file} is missing. Run npm run build.`);
+      res.setHeader('cache-control', 'no-cache');
+      res.sendFile(file, { root: staticDir });
+    };
     app.get(['/glasses', '/glasses/*splat'], page('glasses.html'));
     app.get(['/', '/*splat'], page('index.html'));
   } else {

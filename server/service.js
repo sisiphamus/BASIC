@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { createSession, applyAnalysis, applyCommand, supervisorSay, addRule, removeRule, refreshFromPlaybook, trainingRecord } from './engine.js';
 import { SYSTEM_PROMPT, RESPONSE_SCHEMA, buildUserPrompt } from './prompt.js';
 import { parseRuleText, ruleIdFrom } from './rule-text.js';
+import { fillTemplate } from './playbooks.js';
 
 const STALE_FRAME_MS = 8000;
 const TROUBLE_LINE = "I'm having trouble seeing right now. Keep going carefully. Your supervisor can still see your feed.";
@@ -55,6 +56,7 @@ export class Service {
   publicSession(s) {
     const r = this.runtime.get(s.id);
     const frames = this.store.frames(s.id);
+    const vars = { ...s.job, worker: s.worker };
     return {
       id: s.id,
       createdAt: s.createdAt,
@@ -80,9 +82,9 @@ export class Service {
         finishedAt: st.finishedAt,
         evidence: st.evidence,
         frameId: st.frameId,
-        say: s.stepDefs[i].say,
-        check: s.stepDefs[i].check,
-        why: s.stepDefs[i].why,
+        say: fillTemplate(s.stepDefs[i].say, vars),
+        check: fillTemplate(s.stepDefs[i].check, vars),
+        why: fillTemplate(s.stepDefs[i].why, vars),
       })),
       rules: s.rules,
       frames: frames.length,
@@ -102,7 +104,16 @@ export class Service {
   snapshot(sessionId) {
     if (sessionId) {
       const s = this.store.get(sessionId);
-      return { type: 'snapshot', sessions: s ? [this.publicSession(s)] : [] };
+      // Lines spoken in the last few seconds, so a page that connects late (or reconnects)
+      // still hears the current instruction. The page skips ids it already played.
+      const since = Date.now() - 15_000;
+      const says = s
+        ? this.store
+            .eventsFor(sessionId)
+            .filter((e) => e.type === 'say' && e.ts >= since)
+            .map((e) => ({ id: e.sayId, text: e.text, source: e.source, interrupt: false, stepId: e.stepId, ts: e.ts }))
+        : [];
+      return { type: 'snapshot', sessions: s ? [this.publicSession(s)] : [], says };
     }
     return { type: 'snapshot', sessions: this.store.all().map((s) => this.publicSession(s)) };
   }

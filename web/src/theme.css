@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@fontsource/barlow-condensed/500.css";
+@import "@fontsource/barlow-condensed/600.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/archivo/400.css";
+@import "@fontsource/archivo/500.css";
+@import "@fontsource/archivo/600.css";
+
+/* Base Academy tokens.
+   Strategy: restrained. Neutral white + ink, one accent (hi-vis safety yellow, as on
+   ANSI/NEC equipment labels) reserved for "needs you" and the primary action.
+   Pass/fail colors are semantic, not decorative. */
+@theme {
+  --color-canvas: oklch(0.975 0.003 255);
+  --color-panel: oklch(1 0 0);
+  --color-ink: oklch(0.19 0.014 258);
+  --color-ink-2: oklch(0.4 0.014 258);
+  --color-ink-3: oklch(0.56 0.01 258);
+  --color-line: oklch(0.9 0.006 258);
+  --color-line-2: oklch(0.83 0.008 258);
+  --color-hivis: oklch(0.89 0.17 100);
+  --color-hivis-deep: oklch(0.8 0.16 92);
+  --color-pass: oklch(0.52 0.13 152);
+  --color-pass-soft: oklch(0.95 0.04 152);
+  --color-fail: oklch(0.54 0.19 29);
+  --color-fail-soft: oklch(0.95 0.035 29);
+  --color-stage: oklch(0.16 0.01 258);
+
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

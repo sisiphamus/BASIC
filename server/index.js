@@ -51,7 +51,7 @@ export function chooseProvider(env = process.env) {
   return new GeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL });
 }
 
-export async function start({ port = Number(process.env.PORT || 3000), httpsPort = Number(process.env.HTTPS_PORT || 3443), dataDir = process.env.DATA_DIR || path.join(root, 'data'), playbookDir = process.env.PLAYBOOK_DIR || path.join(root, 'playbooks'), provider = chooseProvider(), quiet = false } = {}) {
+export async function start({ port = Number(process.env.PORT || 3000), httpsPort = Number(process.env.HTTPS_PORT || 3443), dataDir = process.env.DATA_DIR || path.join(root, 'data'), playbookDir = process.env.PLAYBOOK_DIR || path.join(root, 'playbooks'), staticDir = process.env.STATIC_DIR || path.join(root, 'dist'), provider = chooseProvider(), quiet = false } = {}) {
   const log = quiet ? () => {} : (m) => console.log(`[${new Date().toLocaleTimeString()}] ${m}`);
   const playbooks = new PlaybookLibrary(playbookDir).load();
   playbooks.watch();
@@ -62,7 +62,7 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
 
   const urls = {};
   const info = () => ({ urls });
-  const app = createApp({ service, playbooks, provider, hub, staticDir: path.join(root, 'dist'), info });
+  const app = createApp({ service, playbooks, provider, hub, staticDir, info });
 
   const httpServer = http.createServer(app);
   hub.attach(httpServer);
@@ -101,7 +101,12 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
     store.flush();
     hub.close();
     playbooks.close();
-    await Promise.all([new Promise((r) => httpServer.close(r)), httpsServer ? new Promise((r) => httpsServer.close(r)) : null]);
+    const shut = (srv) =>
+      new Promise((r) => {
+        srv.close(r);
+        srv.closeAllConnections?.(); // don't wait on idle keep-alive sockets
+      });
+    await Promise.all([shut(httpServer), httpsServer ? shut(httpsServer) : null]);
   };
   return { app, service, store, hub, playbooks, provider, httpServer, httpsServer, port: realPort, httpsPort: httpsServer?.address().port, close };
 }

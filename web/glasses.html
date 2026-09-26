@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Base Academy · Glasses</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./src/glasses/glasses.css" />
+  </head>
+  <body>
+    <main id="app" class="g-shell">
+      <!-- setup -->
+      <section id="setup" class="g-screen">
+        <header class="g-brand">
+          <h1 class="font-display">Base Academy</h1>
+          <p>Pair your Meta glasses to this phone over Bluetooth, then start the job. Coaching plays through the glasses.</p>
+        </header>
+
+        <p id="insecure" class="g-alert" hidden>
+          The camera only works on a secure link. Open the <strong>https://</strong> address the server printed, and accept the certificate warning once.
+        </p>
+
+        <section id="resume" class="g-resume" hidden>
+          <h2 class="font-display">Job in progress</h2>
+          <p id="resume-text"></p>
+          <button id="resume-btn" class="g-primary" type="button">Resume job</button>
+        </section>
+
+        <form id="start-form" class="g-form" novalidate>
+          <label class="g-field">
+            <span>Your name</span>
+            <input id="worker" name="worker" autocomplete="name" required maxlength="60" placeholder="e.g. Marcus Webb" />
+          </label>
+
+          <label class="g-field">
+            <span>Job</span>
+            <select id="playbook" name="playbook" required></select>
+          </label>
+
+          <fieldset class="g-field">
+            <legend>Mode</legend>
+            <div class="g-seg" role="radiogroup">
+              <label><input type="radio" name="mode" value="crew" checked /><span>Crew</span></label>
+              <label><input type="radio" name="mode" value="trainee" /><span>Trainee</span></label>
+            </div>
+            <small id="mode-help">Crew: short checks. Trainee: explains why each step matters.</small>
+          </fieldset>
+
+          <label class="g-field">
+            <span>Video from</span>
+            <select id="source" name="source">
+              <option value="back">This phone's back camera</option>
+              <option value="front">This phone's front camera</option>
+              <option value="screen">A shared window (glasses video call on a laptop)</option>
+            </select>
+          </label>
+
+          <label class="g-check">
+            <input type="checkbox" id="speak-here" checked />
+            <span>Speak the coaching on this device</span>
+          </label>
+
+          <p id="form-error" class="g-error" role="alert" hidden></p>
+          <button id="start" class="g-primary" type="submit">Start job</button>
+        </form>
+
+        <section class="g-join" id="join" hidden>
+          <h2 class="font-display">Speak for a crew already running</h2>
+          <p>Use this when another device sends the video and this phone is paired to the glasses.</p>
+          <ul id="join-list"></ul>
+        </section>
+      </section>
+
+      <!-- live -->
+      <section id="live" class="g-screen" hidden>
+        <header class="g-top">
+          <div>
+            <strong id="live-worker"></strong>
+            <span id="live-job"></span>
+          </div>
+          <span id="conn" class="g-conn" data-state="connecting">Connecting</span>
+        </header>
+
+        <div class="g-step">
+          <p id="step-count"></p>
+          <h2 id="step-title" class="font-display"></h2>
+          <ol id="step-bar" class="g-bar" aria-hidden="true"></ol>
+        </div>
+
+        <p id="instruction" class="g-instruction" aria-live="polite"></p>
+
+        <div id="said" class="g-said" data-source="step" aria-live="polite" hidden>
+          <span id="said-from"></span>
+          <p id="said-text"></p>
+        </div>
+
+        <div class="g-video" id="video-wrap">
+          <video id="video" playsinline muted autoplay></video>
+          <p id="video-stats"></p>
+        </div>
+
+        <div class="g-actions">
+          <button data-cmd="repeat" type="button">Repeat</button>
+          <button data-cmd="help" type="button">Help</button>
+          <button data-cmd="next" type="button">Skip step</button>
+        </div>
+
+        <div class="g-toggles">
+          <button id="mute" type="button" aria-pressed="false">Mute voice</button>
+          <button id="listen" type="button" aria-pressed="false">Voice commands off</button>
+        </div>
+        <p id="heard" class="g-heard"></p>
+
+        <button id="end" class="g-end" type="button">End job</button>
+      </section>
+
+      <!-- done -->
+      <section id="done" class="g-screen" hidden>
+        <h2 class="font-display">Job complete</h2>
+        <p id="done-summary"></p>
+        <ol id="done-steps" class="g-done-steps"></ol>
+        <button id="again" class="g-primary" type="button">Start another job</button>
+      </section>
+    </main>
+    <script type="module" src="./src/glasses/main.js"></script>
+  </body>
+</html>
