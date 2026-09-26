@@ -68,8 +68,8 @@ export function createApp({ service, playbooks, provider, hub, staticDir, info =
   // Frames: raw image body (what the glasses page sends) or JSON { image: "data:image/jpeg;base64,..." }.
   app.post(
     '/api/sessions/:id/frames',
-    express.raw({ type: ['image/*', 'application/octet-stream'], limit: '8mb' }),
-    express.json({ limit: '12mb' }),
+    express.raw({ type: ['image/*', 'application/octet-stream'], limit: '20mb' }),
+    express.json({ limit: '28mb' }),
     wrap((req) => {
       let buf = Buffer.isBuffer(req.body) ? req.body : null;
       if (!buf && typeof req.body?.image === 'string') {

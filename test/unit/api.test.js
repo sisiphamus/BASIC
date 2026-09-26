@@ -133,7 +133,7 @@ test('frame -> model -> speech reaches the glasses, and everything is logged', a
 test('bad uploads are rejected cleanly', async () => {
   const s = await newSession();
   assert.equal((await api('POST', `/api/sessions/${s.id}/frames`, Buffer.from('not an image at all'))).status, 415);
-  assert.equal((await api('POST', `/api/sessions/${s.id}/frames`, Buffer.alloc(9 * 1024 * 1024, 1))).status, 413);
+  assert.equal((await api('POST', `/api/sessions/${s.id}/frames`, Buffer.alloc(21 * 1024 * 1024, 1))).status, 413);
   assert.equal((await api('POST', `/api/sessions/nope/frames`, JPEG)).status, 404);
   assert.equal((await api('POST', `/api/sessions/${s.id}/frames`, undefined)).status, 400);
   assert.equal(mock.calls.length, 0);
