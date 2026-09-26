@@ -167,7 +167,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
 
   when (prop) {
     "label" -> return SerialLabel { prop = null }
-    "app" -> return InstallerApp { prop = null }
+    "app" -> return InstallerApp(status.stepId) { prop = null }
   }
 
   Column(

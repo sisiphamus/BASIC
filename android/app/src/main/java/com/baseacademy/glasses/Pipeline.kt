@@ -47,6 +47,7 @@ data class Status(
     val serverSession: String? = null,
     val job: String = "",
     val step: String = "",
+    val stepId: String = "",
     val stepNo: Int = 0,
     val stepCount: Int = 0,
     val jobStatus: String = "",
@@ -296,6 +297,7 @@ object Pipeline {
     streamJobs.clear()
     camera = null
     stream = null
+    _status.update { it.copy(stream = if (paused) "paused" else "restarting") }
     runCatching { s.removeCamera() } // required before the next addCamera()
     if (talking) {
       speaker.release()
@@ -481,11 +483,13 @@ object Pipeline {
     val steps = s.optJSONArray("steps")
     val cur = s.optInt("current", 0)
     val title = steps?.optJSONObject(cur)?.optString("title").orEmpty()
+    val stepId = steps?.optJSONObject(cur)?.optString("id").orEmpty()
     _status.update {
       it.copy(
           serverSession = s.optString("id"),
           job = s.optString("playbookTitle"),
           step = title,
+          stepId = stepId,
           stepNo = cur + 1,
           stepCount = steps?.length() ?: 0,
           jobStatus = s.optString("status"),
@@ -560,6 +564,7 @@ object Pipeline {
     val text = say.optString("text")
     val source = say.optString("source")
     _status.update { it.copy(lastSaid = text, lastSaidFrom = source) }
+    if (paused) return // paused means quiet too; the line still shows on screen
     speaker.say(say.optString("id").ifBlank { null }, text, say.optBoolean("interrupt"))
   }
 

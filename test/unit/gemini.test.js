@@ -179,3 +179,21 @@ test('a one-off 400 that names no setting is retried bare once and NOT remembere
   await p.analyze(input);
   assert.ok(calls[2].body.generationConfig.thinkingConfig, 'next frame uses full settings again');
 });
+
+test('parseModelJson repairs near-JSON a model sometimes returns (inner quotes, trailing commas)', () => {
+  const bad = '{"scene": "banner reads "Grid test passed" in green", "step": {"status": "pass", "evidence": "ok", "confidence": 0.9,}, "rules": []}';
+  const out = parseModelJson(bad);
+  assert.equal(out.step.status, 'pass');
+  assert.match(out.scene, /Grid test passed/);
+});
+
+test('parseModelJson takes the model\'s corrected (last) object when it answers twice', () => {
+  const twice = `{"scene": "banner", "step": {"status": "pass", "evidence": "Banner reads 'Grid test passed'; ok", "confidence": 0.97}, "rules": []}
+
+Correction: the JSON must include coach_line inside step. Corrected output:
+
+{"scene": "banner", "step": {"status": "pass", "evidence": "Banner reads 'Grid test passed'; ok", "confidence": 0.97, "coach_line": "Grid test passed. Close the grid breaker."}, "rules": []}`;
+  const out = parseModelJson(twice);
+  assert.equal(out.step.coach_line, 'Grid test passed. Close the grid breaker.');
+  assert.deepEqual(parseModelJson('x {"a": "has } brace in string"} y'), { a: 'has } brace in string' });
+});

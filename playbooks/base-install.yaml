@@ -1,88 +1,109 @@
-# Visit 2, the battery install, as the Base team does it: set the stack, scan it to the job,
-# plug in, dress the enclosure (four side panels, then the top panel), commission, closeout photos.
+# Visit 2, the battery install, in the order a Base installer described it:
+# stack down + QR scan, Disco off, inverter, bus/harness, D2I prep, panels + D2I routing,
+# commissioning, grid test, verification, closeout photo.
 # Only the instructions are fixed. Every confirmation, correction and hint is written by the model
 # from what it sees, in the voice described in `context`.
 
 id: base-install
 title: Base battery install (visit 2)
-summary: Set the stack, scan it to the job, connect, install side and top panels, commission, closeout photos.
+summary: Stack and QR scan, Disco off, inverter, bus and harness, D2I, panels, commissioning, grid test, closeout.
 frame_interval_ms: 2000
 
 context: >-
   This is a live, filmed hackathon demonstration for Base Power. The tech is setting up a real Base
-  battery, but it is NOT at a customer's house: expect a warehouse, yard or showroom, no house wall,
-  no pad, no meter. Never fail a step because the house, wall, pad or site is missing; judge only the
-  battery and what the tech is doing to it. The tech may only pretend some actions (for example
-  pointing a phone at the label to "scan" it, or showing a commissioning screen); accept a clear,
-  deliberate pretend action as done. Speak like a senior Base field supervisor coaching a new
-  installer: formal, precise, calm, technical vocabulary (enclosure, side panels, top panel, module
-  stack, integrated base, harness, connector, serial label, commissioning, closeout). No slang, no
-  jokes, no exclamation marks. Reference facts from Base's install requirements only when they apply:
-  each battery occupies a 3 ft by 3 ft footprint, about 36 inches tall, on an integrated base; it sits
-  within 1 ft of the wall, within 20 ft of the meter, at least 3 ft from gas meters, and never in front
-  of windows, meters or panels. Never invent a serial number, reading or measurement you cannot read.
-  Props for this demo are limited: the module stack, ONE side panel (it stands in for all four), and
-  the top panel. There is no real harness: for the connection step, a clear close-up of the stack's
-  connector port with the tech's hand at it counts. The serial label may be a printed sheet taped to
-  the stack or shown on a second phone. The installer app may be a status screen shown on a phone.
+  battery module stack, but it is NOT at a customer's house: expect a warehouse, yard or showroom,
+  no house wall, no pad, no meter. Never fail a step because the house, wall, pad or site is missing;
+  judge only the battery and what the tech is doing. Props are limited: the module stack, ONE side
+  panel (it stands in for all panels) and the top panel. There is no real Disco, inverter, bus bar,
+  harness, D2I cable or breaker at the demo: for those steps the tech either acts the step out at the
+  stack (hands clearly placing, connecting, uncapping or routing at the right spot) or shows the
+  matching screen of the Base installer app on a phone. Accept a clear, deliberate pretend action or
+  the matching app screen as done; do not require the real part. Serial labels and app screens are
+  shown on a phone screen. Speak like a senior Base field supervisor coaching a new installer:
+  formal, precise, calm, technical vocabulary (module stack, Disco, inverter, bus bar, harness,
+  D2I, side panels, top panel, commissioning, grid test, islanding, backup, closeout). No slang, no
+  jokes, no exclamation marks. Never invent a serial number, reading or measurement you cannot read.
+  Base install facts you may use when relevant: each battery occupies a 3 ft by 3 ft footprint, about
+  36 inches tall, on an integrated base; it sits within 1 ft of the wall, within 20 ft of the meter,
+  at least 3 ft from gas meters, and never in front of windows, meters or panels. The Disco is Base's
+  external disconnect; it must be OFF before any connection is made at the battery.
 
 job:
   customer: Ron Swanson
   address: 2305 Goldsmith St, Houston TX
   job_number: BP-24-1187
+  serial: BP2-0418-7731
 
 steps:
   - id: stack-set
     title: Stack set
-    say: Job BP-24-1187. Begin with the battery stack set in position, enclosure panels off. Step back so I can see the full stack.
-    why: The stack sits on its integrated base. It must be level and fully seated before any panel or connection goes on.
-    check: A Base battery stack is visible with its enclosure panels off or open, standing upright and set down on the ground or floor, most of it in frame.
+    say: Job BP-24-1187. Set the battery stack in position, then step back so I can see the full stack.
+    why: The stack sits on its integrated base and must be upright and fully seated before any connection is made.
+    check: A Base battery module stack is visible, upright and set down on the ground or floor, most of it in frame, with no side panels installed yet.
 
-  - id: serial-scan
-    title: Serial scan
-    say: Scan the serial label to register this unit to the job. Hold the label steady in front of the camera for two seconds.
+  - id: qr-scan
+    title: QR scan
+    say: Scan the unit's QR code to register it to this job. Tap Show serial label and hold the phone at the stack for two seconds.
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
-    check: A serial label is close, in focus and readable, whether printed, stuck on the stack or shown on a phone screen held at the stack. Read the serial number and job number exactly, report them in evidence, and repeat the serial number in coach_line.
+    check: A serial or QR label is close, in focus and readable, shown on a phone or on the stack. Read the serial number and job number exactly, report them in evidence, confirm they match the job file, and repeat the serial number in coach_line.
 
-  - id: plug-in
-    title: Power and communication connection
-    say: Connect the power and communication harness at the stack's connector port. Seat it until the latch engages, then show me the port up close.
-    why: A partly seated connector runs hot. It is the most common cause of a unit dropping into maintenance mode after install.
-    check: A close-up of the battery stack's connector or port area, with the tech's hand at it or a cable plugged in.
+  - id: disco-off
+    title: Disco off
+    say: Before any connection, confirm the Disco is in the OFF position. Open the Base installer app and show me the pre-check screen.
+    why: The Disco isolates the battery from the home and the grid. Every connection at the battery is made with it off.
+    check: Either the Base installer app pre-check screen showing the Disconnect or Disco as OFF, or a disconnect switch handle clearly in the OFF position.
 
-  - id: side-panels
-    title: Side panels
-    say: Install the side panel. Align it to the frame and confirm it sits flush against the stack.
-    why: The side panels are the weather and touch barrier for the stack. A gap lets in water and debris.
-    check: A white enclosure side panel is fitted against the battery stack, or held flush against it, covering one side.
+  - id: inverter
+    title: Inverter
+    say: Set the inverter on the stack and seat it. Show me the inverter position on top of the stack.
+    why: The inverter converts the battery's DC to the home's AC. It must be fully seated on its mounts before the bus is connected.
+    check: The top of the battery stack where the inverter mounts is in view, with the tech's hands placing, seating or indicating the inverter there, or an inverter unit set on the stack.
 
-  - id: top-panel
-    title: Top panel
-    say: Install the top panel last. Seat it across all four side panels, then step back so I can see the full enclosure.
-    why: The top panel locks the enclosure closed. It goes on only after every side panel is flush.
-    check: The white top panel is seated on top of the battery stack, with the side panel in place.
+  - id: bus-harness
+    title: Bus bar and harness
+    say: Connect the bus bar and the harness between the modules and the inverter. Show me the connection point up close.
+    why: The bus bar carries battery current and the harness carries control signals. A loose connection here runs hot.
+    check: A close-up of the stack's connection area (bus bar, connector, port or cable ends), with the tech's hand at it making the connection, or a cable plugged in.
+
+  - id: d2i-prep
+    title: D2I prep
+    say: Remove the cap from the D2I connector and prep it for routing. Show me the connector up close.
+    why: The D2I carries the connection out to the Disco. The cap stays on until routing so the pins stay clean.
+    check: A connector, plug or cable end is held up close to the camera, or the tech's fingers are clearly removing a cap from a connector at the stack.
+
+  - id: panels
+    title: Panels and D2I routing
+    say: Install the side panels and route the D2I through the panel opening, then seat the top panel. Step back so I can see the enclosure.
+    why: The panels are the weather and touch barrier. The D2I must exit through the opening, not pinched under a panel.
+    check: A white side panel is fitted against the stack and the white top panel is seated on top, shown as an assembled unit.
 
   - id: commission
     title: Commissioning
-    say: Commission the system. Open the installer app and show me the unit status screen.
-    why: Commissioning brings the unit online and confirms it is reporting before the crew leaves. Base expects it to appear in the app within 24 to 48 hours.
-    check: A phone or tablet screen is clearly shown, displaying an app, a commissioning or status screen, or an online or connected state.
+    say: Commission the system. Open the Base installer app and show me the commissioning screen once it reads Online.
+    why: Commissioning brings the unit online and confirms it is reporting to Base before the crew leaves.
+    check: The Base installer app commissioning screen is shown and reads Online, with its checks passing.
 
-  - id: closeout-front
-    title: Closeout photo, front
-    say: Closeout photos. First the front. Stand square to the unit, about six feet back, with the whole enclosure in frame.
-    why: The closeout photos are the permanent record of the finished install, for the customer file and the inspector.
-    check: The assembled battery (stack with its side and top panel) is shown from the front, fully in frame, reasonably level and in focus.
+  - id: grid-test
+    title: Grid test
+    say: Grid test. Turn off the grid breaker, then show me the grid test screen in the installer app.
+    why: The grid test proves the home islands onto the battery when utility power is lost. That is the backup the customer is paying for.
+    check: The Base installer app grid test screen is shown with the grid OFF or open, or a breaker handle is clearly being switched off.
 
-  - id: closeout-label
-    title: Closeout photo, labels and side
-    say: Last closeout photo. Show me a side of the unit with the nameplate or warning label readable.
-    why: Code and our records require the labels to be present and legible at handoff.
-    check: The serial label, BASE badge or a warning label on the assembled battery is visible and legible, with part of the unit in frame.
+  - id: grid-verify
+    title: Backup verified
+    say: Hold on the grid test screen until it confirms the home is running on the battery, then restore the breaker.
+    why: Verification confirms the battery carried the load with the grid off. Restore the breaker so the unit resynchronizes to the grid.
+    check: The Base installer app grid test screen shows the test passed, for example the home running on battery or backup verified.
+
+  - id: closeout
+    title: Closeout photo
+    say: Closeout photo. Stand square to the unit, about six feet back, with the whole enclosure in frame.
+    why: The closeout photo is the permanent record of the finished install for the customer file and the inspector.
+    check: The assembled battery (stack with side and top panel) is shown from the front, fully in frame, reasonably level and in focus.
 
 watch:
   - id: hands-in-live-enclosure
-    when: Bare hands are inside the open battery stack touching terminals, busbars or exposed conductors.
+    when: Bare hands are inside the open battery stack touching terminals, bus bars or exposed conductors.
     say: ''
     cooldown_s: 30
 

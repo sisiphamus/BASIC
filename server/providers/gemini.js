@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair';
 // Gemini vision connector (REST generateContent, no SDK so there is nothing to break on install).
 // Built to survive a model or API change on the day: it picks a live model, drops optional
 // settings the model rejects, falls through dead model names, and retries transient errors.
@@ -42,6 +43,15 @@ export function parseModelJson(text) {
       /* fall through */
     }
   }
+  // Several objects (e.g. an answer and then a "corrected" answer): use the last one that parses.
+  const objects = topLevelObjects(t);
+  for (let i = objects.length - 1; i >= 0; i--) {
+    try {
+      return JSON.parse(objects[i]);
+    } catch {
+      /* try the previous one */
+    }
+  }
   const start = t.indexOf('{');
   const end = t.lastIndexOf('}');
   if (start !== -1 && end > start) {
@@ -51,7 +61,42 @@ export function parseModelJson(text) {
       /* fall through */
     }
   }
+  // Last resort: repair near-JSON (unescaped inner quotes, trailing commas, cut-off endings).
+  if (start !== -1) {
+    try {
+      return JSON.parse(jsonrepair(t.slice(start, end > start ? end + 1 : undefined)));
+    } catch {
+      /* fall through */
+    }
+  }
   throw new Error(`model did not return JSON: ${t.slice(0, 120)}`);
+}
+
+/** Balanced top-level {...} spans, ignoring braces inside strings. */
+function topLevelObjects(t) {
+  const out = [];
+  let depth = 0;
+  let begin = -1;
+  let inStr = false;
+  let esc = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') {
+      if (depth === 0) begin = i;
+      depth += 1;
+    } else if (c === '}' && depth > 0) {
+      depth -= 1;
+      if (depth === 0) out.push(t.slice(begin, i + 1));
+    }
+  }
+  return out;
 }
 
 const STATUS = { pass: 'pass', passed: 'pass', ok: 'pass', yes: 'pass', fail: 'fail', failed: 'fail', no: 'fail', unclear: 'unclear', unknown: 'unclear', not_visible: 'unclear' };
