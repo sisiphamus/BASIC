@@ -75,7 +75,7 @@ test('a fail says the templated fail line, marks helped, and is rate limited', (
   const { s } = fresh();
   assert.deepEqual(said(applyAnalysis(s, res('fail'), { now: 1000 })), ['A needs 36']);
   assert.deepEqual(said(applyAnalysis(s, res('fail'), { now: 3000 })), []);
-  assert.deepEqual(said(applyAnalysis(s, res('fail'), { now: 13000 })), ['A needs 36']);
+  assert.deepEqual(said(applyAnalysis(s, res("fail"), { now: 18000 })), ['A needs 36']);
   assert.equal(s.steps[0].fails, 3);
   assert.equal(s.steps[0].helped, true);
 });

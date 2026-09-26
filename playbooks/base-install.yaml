@@ -19,10 +19,11 @@ context: >-
   stack (hands clearly placing, connecting, uncapping or routing at the right spot) or shows the
   matching screen of the Base installer app on a phone. Accept a clear, deliberate pretend action or
   the matching app screen as done; do not require the real part. For steps whose part is missing, the
-  instruction explains what happens in a real install and then asks for one simple stand-in action
+  instruction asks for one simple stand-in action
   (set the top shell, press its edge, show a corner): judge only that stand-in action, and in
-  coach_line briefly confirm it and tie it back to the real step (for example "Top shell is flat on
-  all four corners; that is the seating the inverter needs on its studs"). Serial labels and app screens are
+  coach_line briefly confirm it and tie it back to the real step (for example "Top shell is flat.
+  That is how the inverter must seat.").
+  Keep every spoken line to ONE short sentence, about 12 words or fewer. One instruction at a time. Serial labels and app screens are
   shown on a phone screen. Speak like a senior Base field supervisor coaching a new installer:
   formal, precise, calm, technical vocabulary (module stack, Disco, inverter, bus bar, harness,
   D2I, side panels, top panel, commissioning, grid test, islanding, backup, closeout). No slang, no
@@ -47,67 +48,67 @@ job:
 steps:
   - id: stack-set
     title: Stack set
-    say: Job BP-24-1187. Set the module stack on flat ground with the Base labels facing you. Step back until the whole stack, top plate to base, is in view.
+    say: Set the module stack on flat ground, labels facing you. Then step back.
     why: The stack sits on its integrated base and must be upright and fully seated before any connection is made.
     check: A Base battery module stack is visible, upright and set down on the ground or floor, most of it in frame, with no side panels installed yet.
 
   - id: qr-scan
     title: QR scan
-    say: Scan the unit. Find the Base spec label on the top module; the QR code is in its upper right corner. Hold that corner about a foot from the glasses for two seconds.
+    say: Scan the unit. Hold the QR corner of the Base label up to the glasses.
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
     check: A QR code or serial label is visible on the battery or on a phone held at it. It does NOT need to be readable, the QR code is small; a clearly visible QR label in frame counts as scanned. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
 
   - id: disco-off
     title: Disco off
-    say: Before any connection, the Disco must be off. Open the Base installer app and show me the pre-check screen reading Disco OFF.
+    say: Confirm the Disco is off. Show me the pre-check screen in the installer app.
     why: The Disco isolates the battery from the home and the grid. Every connection at the battery is made with it off.
     check: Either the Base installer app pre-check screen showing the Disconnect or Disco as OFF, or a disconnect switch handle clearly in the OFF position.
 
   - id: inverter
     title: Inverter
-    say: In a real install, the inverter seats on the four round mounting studs on the top plate and must sit flat before anything is connected. There is no inverter today, so set the top shell on the stack in its place and make sure it sits flat on all four corners.
-    why: The inverter converts the battery's DC to the home's AC. It must be fully seated on its mounts before the bus is connected.
+    say: The inverter would seat on the top plate. Today, set the top shell on the stack.
+    why: In a real install, the inverter seats on the four round mounting studs on the top plate and must sit flat before anything is connected.
     check: The white top shell (top panel) has been set on top of the battery stack and is sitting flat, or the tech is placing it there.
 
   - id: bus-harness
     title: Bus bar and harness
-    say: In a real install, the bus bar carries battery current from the modules to the inverter and the harness carries its control signals, so both must be fully seated and latched. For this step, press down on the front edge of the top shell and confirm it does not rock.
-    why: The bus bar carries battery current and the harness carries control signals. A loose connection here runs hot.
+    say: Press down on the front edge of the top shell. It should not rock.
+    why: The bus bar carries battery current from the modules to the inverter; the harness carries its control signals. Both must be fully seated and latched.
     check: The tech's hand is pressing on or running along the front edge of the top shell on the battery stack, and the shell is sitting flat.
 
   - id: d2i-prep
     title: D2I prep
-    say: In a real install, the D2I carries power out to the Disco, and its cap stays on until routing so the pins stay clean. For this step, show me the back corner of the stack where the D2I would exit the enclosure.
-    why: The D2I carries the connection out to the Disco. The cap stays on until routing so the pins stay clean.
+    say: Show me the back corner where the D2I cable would exit.
+    why: The D2I carries power out to the Disco. Its cap stays on until routing so the pins stay clean.
     check: A corner or back edge of the battery stack, with the top shell on it, is shown up close, or the tech is pointing at where a cable would exit.
 
   - id: panels
     title: Panels and D2I routing
-    say: In a real install, the four side panels go on first and the top panel locks them in place, with the D2I routed through the panel opening. Today the top shell stands in for the full enclosure. Step back so I can see the whole unit.
-    why: The panels are the weather and touch barrier. The D2I must exit through the opening, not pinched under a panel.
+    say: Step back. Show me the whole unit with the top shell on.
+    why: In a real install, the four side panels go on first and the top panel locks them in place, with the D2I routed through the panel opening.
     check: The whole battery stack with the white top shell seated on it is in view, shown as one assembled unit.
 
   - id: commission
     title: Commissioning
-    say: Commission the system. Open the Base installer app and show me the commissioning screen once it reads Online.
+    say: Commission the system. Show me the installer app once it reads Online.
     why: Commissioning brings the unit online and confirms it is reporting to Base before the crew leaves.
     check: The Base installer app commissioning screen is shown and reads Online, with its checks passing.
 
   - id: grid-test
     title: Grid test
-    say: Grid test. Turn off the grid breaker, then show me the grid test screen in the installer app.
+    say: Grid test. Turn off the grid breaker, then show me the grid test screen.
     why: The grid test proves the home islands onto the battery when utility power is lost. That is the backup the customer is paying for.
     check: The Base installer app grid test screen is shown with the grid OFF or open, or a breaker handle is clearly being switched off.
 
   - id: grid-verify
     title: Backup verified
-    say: Hold on the grid test screen until it confirms the home is running on the battery, then restore the breaker.
+    say: Hold on that screen until it says the test passed.
     why: Verification confirms the battery carried the load with the grid off. Restore the breaker so the unit resynchronizes to the grid.
     check: The Base installer app grid test screen shows the test passed, for example the home running on battery or backup verified.
 
   - id: closeout
     title: Closeout photo
-    say: Closeout photo. Stand square to the unit, about six feet back, with the whole enclosure in frame.
+    say: Closeout photo. Step back about six feet, unit centered.
     why: The closeout photo is the permanent record of the finished install for the customer file and the inspector.
     check: The assembled battery (stack with side and top panel) is shown from the front, fully in frame, reasonably level and in focus.
 

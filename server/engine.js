@@ -4,9 +4,9 @@
 import { fillTemplate, parseWatchRule } from './playbooks.js';
 
 export const TIMING = {
-  failRepeatMs: 10_000, // don't repeat a fail line faster than this
+  failRepeatMs: 15_000, // don't repeat a fail line faster than this
   hintAfterUnclear: 4, // unclear frames in a row before we give a hint
-  hintRepeatMs: 12_000,
+  hintRepeatMs: 15_000,
   dedupeMs: 8_000, // same line within this window is dropped
 };
 

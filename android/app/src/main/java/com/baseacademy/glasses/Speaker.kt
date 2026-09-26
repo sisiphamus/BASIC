@@ -43,7 +43,7 @@ class Speaker(
           return@TextToSpeech
         }
         tts.language = Locale.US
-        tts.setSpeechRate(1.05f)
+        tts.setSpeechRate(0.9f) // a little slower: easier to follow through the glasses
         tts.setOnUtteranceProgressListener(
             object : UtteranceProgressListener() {
               override fun onStart(id: String?) = Unit
