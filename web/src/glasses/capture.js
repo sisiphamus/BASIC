@@ -1,4 +1,4 @@
-// Grab a still from the video every N ms and post it. One upload at a time; if the network
+// Grab a full-resolution still from the video every N ms and post it (no downscaling: detail matters more than bytes). One upload at a time; if the network
 // is slow we skip a beat rather than build a backlog.
 
 export async function openSource(kind, deviceId) {
@@ -24,7 +24,7 @@ export async function listCameras() {
 }
 
 export class FrameLoop {
-  constructor({ video, url, intervalMs = 2000, maxWidth = 960, quality = 0.72, onSent, onError }) {
+  constructor({ video, url, intervalMs = 2000, maxWidth = Infinity, quality = 0.92, onSent, onError }) {
     this.video = video;
     this.url = url;
     this.intervalMs = intervalMs;
