@@ -90,7 +90,7 @@ class ApiError extends Error {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export class GeminiProvider {
-  constructor({ apiKey = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL, fallbackModels = DEFAULT_FALLBACKS, baseUrl = 'https://generativelanguage.googleapis.com', timeoutMs = 12_000, maxRetries = 1, retryDelayMs = 600 } = {}) {
+  constructor({ apiKey = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL, fallbackModels = DEFAULT_FALLBACKS, baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com', timeoutMs = 12_000, maxRetries = 1, retryDelayMs = 600 } = {}) {
     this.name = 'gemini';
     this.apiKey = (apiKey || '').trim();
     this.configured = (model || '').trim() || null;

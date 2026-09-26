@@ -1,0 +1,130 @@
+# Base Academy
+
+AI coaching through Meta glasses for Base Power field crews, plus a dashboard where one master electrician watches every crew at once.
+
+The glasses (or a phone camera) send a still frame every 2 seconds. Gemini checks it against the current step of a job playbook ("tape reads 36 inches or more from the window"). The crew hears what to do next, what's wrong, and when a step passes. The supervisor sees every crew live, scrubs back through footage, talks into anyone's glasses by typing, and adds new things to watch for in plain English. Every job ends with a proof packet for the inspector, and every pass counts toward a worker's training record.
+
+## Run it
+
+```bash
+npm install
+cp env.example .env         # put GEMINI_API_KEY in it (optional, see below)
+npm run build
+npm start
+```
+
+The server prints two kinds of links:
+
+```
+dashboard:       http://localhost:3000
+glasses (phone): https://192.168.1.162:3443/glasses
+```
+
+- **Dashboard**: open on the laptop.
+- **Glasses page**: open on the phone. The phone and laptop need to be on the same Wi-Fi. The first time, the phone shows a certificate warning (the certificate is self-made). Tap "Show details / Advanced" and "visit this website". Phones only allow the camera on https pages, which is why this is needed.
+
+No key? The server runs a built-in walkthrough model that fakes believable results (step 1 fails once, then everything passes). Use it to rehearse. With `GEMINI_API_KEY` set, Gemini judges every frame for real. The server asks Google which models your key can use and picks the newest regular `flash` model. Set `GEMINI_MODEL` to force one.
+
+## Morning checklist (10 minutes)
+
+1. Put the Gemini key in `.env`, then `npm run build && npm start`. The last startup line should say `model: gemini ...`.
+2. On the dashboard, the empty wall shows a QR code for the phone page. Scan it.
+3. Pair the Meta glasses to that phone over Bluetooth (normal Bluetooth audio pairing is enough for option A below).
+4. On the phone: enter a name, pick **Glasses system check**, press Start. It asks for a thumbs up, three fingers, then any screen. If you hear "System check complete", the whole loop works: camera, server, Gemini, voice.
+5. Then run **Battery set and commission** with the props (below).
+
+## Hooking up the glasses
+
+There are three ways. A is the one to trust on stage.
+
+### A. Glasses for audio, phone camera for video (most reliable)
+
+The glasses are a Bluetooth headset. The phone runs the glasses page with its back camera, clipped to a chest mount or held at eye level. Coaching plays in the glasses' speakers, and voice commands ("next", "repeat", "help", "back") use the phone's speech recognition.
+
+### B. The glasses' own camera through a video call
+
+1. On a laptop, open WhatsApp Desktop or messenger.com and log into the account the glasses will call.
+2. From the glasses: "Hey Meta, video call <that contact> on WhatsApp", then switch the call to the glasses camera (double-press the capture button).
+3. On the laptop, open `https://localhost:3443/glasses` in Chrome, set **Video from** to **A shared window**, and pick the call window. Frames now come from the glasses' point of view.
+4. Getting the coaching back into the call means the laptop's speech has to go into the call's microphone:
+   - **Mac:** `brew install blackhole-2ch`. Set the Mac's sound output to BlackHole (or a Multi-Output Device of speakers + BlackHole so you hear it too), and set the call's microphone to BlackHole.
+   - **Windows:** install VB-Cable. Set Chrome's output to "CABLE Input" and the call's microphone to "CABLE Output".
+   - **Linux:** `pactl load-module module-null-sink sink_name=ba_voice`, point Chrome at it in `pavucontrol`, and set the call's microphone to "Monitor of ba_voice".
+   - **No time for that?** Uncheck "Speak the coaching on this device" on the laptop. Then open the glasses page on the phone paired to the glasses and tap the crew under **Speak for a crew already running**. The phone speaks while the laptop sends video. Some phones mute other audio during a call, so test this before relying on it.
+
+   Voice commands don't work in B, because the laptop can't hear the wearer. Use the dashboard buttons instead.
+
+### C. Meta's SDK (the real product path)
+
+Meta's Wearables Device Access Toolkit ([iOS](https://github.com/facebook/meta-wearables-dat-ios), [Android](https://github.com/facebook/meta-wearables-dat-android)) streams the glasses camera into a native app. It needs an app registered in the Wearables Developer Center. A native app only needs the same two calls the glasses page makes:
+
+- `POST /api/sessions/<id>/frames`: body is a JPEG, `content-type: image/jpeg`
+- WebSocket `/ws?role=glasses&session=<id>`: speak every `{type:"say", say:{text}}` message
+
+## Demo props (battery job)
+
+A cardboard box as the battery, a taped-on window frame, a tape measure, a small bubble level, any chunky plug with a colored band, printed "BASE" and "WARNING" labels, and a phone showing an "Online" screen. To show a caught mistake, start the box 2 feet from the "window". The crew hears "That is under 36 inches..." and moves it.
+
+## Playbooks: telling it what to look for and what to say
+
+Jobs are YAML files in `playbooks/`. Edit them in the dashboard (**Playbooks**) or any text editor; changes apply to running crews right away. A bad file is refused with the line number, so it never breaks a live job.
+
+```yaml
+steps:
+  - id: clearance
+    title: Clearance from openings
+    say: Measure from the battery to the nearest window or door.   # said when the step starts
+    check: The tape reading at the frame is {clearance_in} inches or more.   # what Gemini checks
+    pass_say: Clearance is good.
+    fail_say: That is under {clearance_in} inches. Slide the battery away.
+    hint: I can't read the tape yet. Get closer.          # after ~8 s of not seeing it
+    why: Fire code keeps batteries away from openings.    # trainee mode only
+watch:                                                    # checked on every frame
+  - id: bare-hands
+    when: Bare hands are touching a metal connector.
+    say: Gloves on before you touch the connector.        # leave empty and Gemini words it
+    cooldown_s: 30
+```
+
+`{clearance_in}` comes from the `job:` section (the customer file).
+
+During a job, the supervisor can type rules on the crew's page:
+
+- `When you see a ladder against the wall, say check your footing`
+- `If the disconnect is on, tell them to switch it off`
+- `Now check for gloves and safety glasses` (Gemini writes the line)
+
+They apply from the next frame. The supervisor can also rewrite what the current step checks.
+
+## Demo multiple crews
+
+```bash
+npm run simulate -- --crews 5 --loop --images demo-frames/battery-install
+```
+
+Fake crews post frames through the same API as the glasses, which fills the dashboard wall. Use it for the "one master electrician, five crews" moment. With a real key, Gemini judges those photos, so point `--images` at photos that match the steps.
+
+## When something goes wrong
+
+| What you see | Fix |
+|---|---|
+| Phone says the camera needs the https address | Use the `https://...:3443/glasses` link, not http |
+| Phone can't reach the server | Same Wi-Fi? Venue Wi-Fi often blocks device-to-device traffic. Use a phone hotspot, or run `npx cloudflared tunnel --url http://localhost:3000` and open that https URL on the phone |
+| No voice in the glasses | Glasses paired and chosen as the phone's audio output? Volume up? "Speak the coaching on this device" checked? |
+| "Model is having trouble" | Check the dashboard's error line. A bad key shows "API key not valid". A quota problem shows 429. The job keeps going and the supervisor can approve steps by hand |
+| Steps pass too easily / never pass | Edit the step's `check` wording, or raise/lower `min_confidence` (default 0.6) |
+| Port in use | `PORT=3100 HTTPS_PORT=3543 npm start` |
+
+## Tests
+
+```bash
+npm test          # engine, playbooks, Gemini connector (against a fake Gemini), full HTTP + WebSocket API
+npm run build && npm run test:e2e   # real Chrome with a fake camera runs whole jobs through the phone page
+```
+
+## How it's built
+
+- `server/`: Express + WebSocket. `engine.js` is the step state machine (pure, fully tested). `service.js` runs frames through the model, one at a time per crew: if frames arrive faster than the model answers, only the newest waiting frame is checked. `providers/gemini.js` talks to Gemini over REST with fallbacks for model names, optional settings and transient errors. Everything is saved under `data/` (session state, an event log, and every frame), so a restart loses nothing.
+- `web/glasses.html`: the phone page (plain JS, about 17 KB).
+- `web/index.html`: the supervisor dashboard (React).
+- `playbooks/`: the jobs.
