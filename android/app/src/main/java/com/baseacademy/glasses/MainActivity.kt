@@ -139,6 +139,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
   var jobs by remember { mutableStateOf(listOf<Pair<String, String>>()) }
   var serverNote by remember { mutableStateOf("") }
   var prop by remember { mutableStateOf<String?>(null) }
+  var voiceLabel by remember { mutableStateOf("") }
 
   fun save() {
     Settings.serverUrl = server
@@ -187,6 +188,9 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         OutlinedButton(onClick = { prop = "label" }, modifier = Modifier.weight(1f)) { Text("Show serial label") }
         OutlinedButton(onClick = { prop = "app" }, modifier = Modifier.weight(1f)) { Text("Base installer app") }
+      }
+      OutlinedButton(onClick = { voiceLabel = Pipeline.nextVoice() }, modifier = Modifier.fillMaxWidth()) {
+        Text(if (voiceLabel.isBlank()) "Try another voice" else "Try another voice (now: $voiceLabel)")
       }
       if (status.needsCameraPermission) BigButton("Allow glasses camera", HiVis, onAllowCamera)
       if (!mock && status.registration != "REGISTERED") BigButton("Connect glasses (one time)", HiVis, onConnectGlasses)

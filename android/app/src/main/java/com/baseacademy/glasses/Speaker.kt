@@ -44,6 +44,7 @@ class Speaker(
         }
         tts.language = Locale.US
         tts.setSpeechRate(0.9f) // a little slower: easier to follow through the glasses
+        Settings.voiceName?.let { name -> englishVoices().firstOrNull { it.name == name }?.let { tts.voice = it } }
         tts.setOnUtteranceProgressListener(
             object : UtteranceProgressListener() {
               override fun onStart(id: String?) = Unit
@@ -58,6 +59,41 @@ class Speaker(
         )
         pump()
       }
+
+  /** English voices installed on this phone, offline ones first. */
+  fun englishVoices(): List<android.speech.tts.Voice> =
+      if (!ready) emptyList()
+      else (tts.voices ?: emptySet()).filter { it.locale.language == "en" && !it.features.contains("notInstalled") }
+          .sortedWith(compareBy({ it.isNetworkConnectionRequired }, { it.locale.toString() }, { it.name }))
+
+  /** Switch to the next English voice, remember it, and play a sample. Returns a short label. */
+  fun nextVoice(): String {
+    val all = englishVoices()
+    if (all.isEmpty()) return "default"
+    val i = all.indexOfFirst { it.name == tts.voice?.name }
+    val v = all[(i + 1) % all.size]
+    tts.voice = v
+    Settings.voiceName = v.name
+    speakNow("This is Base Academy. Step one: set the module stack.")
+    return label(v)
+  }
+
+  fun currentVoiceLabel(): String = tts.voice?.let { label(it) } ?: "default"
+
+  private fun label(v: android.speech.tts.Voice): String {
+    val n = englishVoices().indexOfFirst { it.name == v.name } + 1
+    return "${v.locale.displayCountry.ifBlank { v.locale.toString() }} $n of ${englishVoices().size}"
+  }
+
+  private fun speakNow(text: String) {
+    tts.stop()
+    val usage = if (Settings.voiceRoute == Settings.ROUTE_CALL) AudioAttributes.USAGE_VOICE_COMMUNICATION else AudioAttributes.USAGE_MEDIA
+    if (usage == AudioAttributes.USAGE_VOICE_COMMUNICATION) routeToCall(true)
+    tts.setAudioAttributes(AudioAttributes.Builder().setUsage(usage).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+    val params = Bundle()
+    if (usage == AudioAttributes.USAGE_VOICE_COMMUNICATION) params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL)
+    tts.speak(text, TextToSpeech.QUEUE_FLUSH, params, "ba-sample-${n++}")
+  }
 
   /** Main-thread entry point for every line from the server. */
   fun say(id: String?, text: String, interrupt: Boolean) {

@@ -176,6 +176,11 @@ object Pipeline {
     if (s.state.value == DeviceSessionState.STARTED) scope?.launch { addCamera(s) }
   }
 
+  /** Cycle the spoken voice (plays a sample). */
+  fun nextVoice(): String = if (scope != null) speaker.nextVoice() else "start first"
+
+  fun voiceLabel(): String = if (scope != null) speaker.currentVoiceLabel() else ""
+
   /** Called by the activity after the Meta AI camera permission flow. */
   fun cameraPermissionGranted() {
     _status.update { it.copy(needsCameraPermission = false) }

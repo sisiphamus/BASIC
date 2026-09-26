@@ -54,6 +54,11 @@ object Settings {
     get() = prefs.getString("voice", ROUTE_CALL)!!
     set(v) = prefs.edit().putString("voice", if (v == ROUTE_CALL) ROUTE_CALL else ROUTE_PAUSE).apply()
 
+  /** Chosen text-to-speech voice name (null = phone default). */
+  var voiceName: String?
+    get() = prefs.getString("voice_name", null)
+    set(v) = prefs.edit().putString("voice_name", v).apply()
+
   /** The server job this phone is working on, so a reconnect continues it. */
   var sessionId: String?
     get() = prefs.getString("session", null)

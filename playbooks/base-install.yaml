@@ -63,9 +63,9 @@ steps:
 
   - id: disco-off
     title: Disco off
-    say: Confirm the Disco is off. Show me the pre-check screen in the installer app.
+    say: Open the installer app and drag the Disco switch down to OFF.
     why: The Disco isolates the battery from the home and the grid. Every connection at the battery is made with it off.
-    check: Either the Base installer app pre-check screen showing the Disco OFF, or a disconnect switch handle clearly in the OFF position.
+    check: The Base installer app pre-check screen shows the Disco OFF (green Disco OFF banner or the lever in the OFF position), or a real disconnect handle clearly in the OFF position.
 
   - id: inverter
     title: Inverter mount
@@ -99,19 +99,19 @@ steps:
 
   - id: commission
     title: Commissioning
-    say: Commission the system. Show me the installer app once it reads Online.
+    say: Open the installer app and press Start commissioning. Show me when it reads Online.
     why: Commissioning brings the unit online and confirms it is reporting to Base before the crew leaves.
     check: The Base installer app commissioning screen is shown and reads Online, with its checks passing.
 
   - id: grid-test
     title: Grid test
-    say: Grid test. Turn off the grid breaker, then show me the grid test screen.
+    say: Grid test. In the installer app, drag the grid breaker down to OFF.
     why: The grid test proves the home islands onto the battery when utility power is lost. That is the backup the customer is paying for.
     check: The Base installer app grid test screen is shown with the grid OFF or open, or a breaker handle is clearly being switched off.
 
   - id: grid-verify
     title: Backup verified
-    say: Hold on that screen until it says the test passed.
+    say: Hold on that screen until it says passed. Then drag the breaker back ON.
     why: Verification confirms the battery carried the load with the grid off. Restore the breaker so the unit resynchronizes to the grid.
     check: The Base installer app grid test screen shows the test passed, for example the home running on battery or backup verified.
 
