@@ -414,7 +414,18 @@ object Pipeline {
         val bytes = jpeg
         if (bytes == null) {
           failures += 1
-          if (failures >= 3) fail("Glasses photos are failing. If you tapped the glasses, tap again to resume.")
+          if (failures >= 3) {
+            // A stale stream keeps failing captures (seen after the glasses drop and come back).
+            // Restart the camera ourselves instead of waiting for someone to press Stop/Start.
+            fail("Glasses photos kept failing. Restarting the glasses camera.")
+            val sess = session
+            val cam = camera
+            if (sess != null && cam != null) {
+              onCameraGone(sess) // removes it and schedules a fresh addCamera()
+              runCatching { cam.stop() }
+            }
+            break
+          }
         } else {
           failures = 0
           _status.update { it.copy(lastCaptureMs = captureMs, lastPhotoSize = size) }
