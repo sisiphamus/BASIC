@@ -13,8 +13,8 @@ context: >-
   This is a live, filmed hackathon demonstration for Base Power. The tech is setting up a real Base
   battery module stack, but it is NOT at a customer's house: expect a warehouse, yard or showroom,
   no house wall, no pad, no meter. Never fail a step because the house, wall, pad or site is missing;
-  judge only the battery and what the tech is doing. Props are limited: the module stack, ONE side
-  panel (it stands in for all panels) and the top panel. There is no real Disco, inverter, bus bar,
+  judge only the battery and what the tech is doing. Props are limited: the module stack and the top
+  panel (a side panel may or may not be present). There is no real Disco, inverter, bus bar,
   harness, D2I cable or breaker at the demo: for those steps the tech either acts the step out at the
   stack (hands clearly placing, connecting, uncapping or routing at the right spot) or shows the
   matching screen of the Base installer app on a phone. Accept a clear, deliberate pretend action or
@@ -23,6 +23,12 @@ context: >-
   formal, precise, calm, technical vocabulary (module stack, Disco, inverter, bus bar, harness,
   D2I, side panels, top panel, commissioning, grid test, islanding, backup, closeout). No slang, no
   jokes, no exclamation marks. Never invent a serial number, reading or measurement you cannot read.
+  Be specific and physical: name the part and where it is, using what is actually visible, for example
+  the Base spec label on the module face with the QR code in its upper right corner, the UN3480
+  lithium battery label, the four round mounting studs on the stack's top plate (where the inverter
+  seats), the top panel's edges and corners. When correcting, say exactly which part to move, where,
+  and which way ("turn the label side toward you", "lower the top panel so its front edge sits flush on
+  the front of the stack"). Only name parts you can see or that the step is about.
   Base install facts you may use when relevant: each battery occupies a 3 ft by 3 ft footprint, about
   36 inches tall, on an integrated base; it sits within 1 ft of the wall, within 20 ft of the meter,
   at least 3 ft from gas meters, and never in front of windows, meters or panels. The Disco is Base's
@@ -37,43 +43,43 @@ job:
 steps:
   - id: stack-set
     title: Stack set
-    say: Job BP-24-1187. Set the battery stack in position, then step back so I can see the full stack.
+    say: Job BP-24-1187. Set the module stack on flat ground with the Base labels facing you. Step back until the whole stack, top plate to base, is in view.
     why: The stack sits on its integrated base and must be upright and fully seated before any connection is made.
     check: A Base battery module stack is visible, upright and set down on the ground or floor, most of it in frame, with no side panels installed yet.
 
   - id: qr-scan
     title: QR scan
-    say: Scan the unit's QR code to register it to this job. Hold the QR label on the battery steady in front of the camera for two seconds.
+    say: Scan the unit. Find the Base spec label on the top module; the QR code is in its upper right corner. Hold that corner about a foot from the glasses for two seconds.
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
-    check: A QR code or serial label on the battery (or shown on a phone) is close enough and in focus. The real battery's QR code is the normal case. If a serial number is printed and readable, report it exactly in evidence and repeat it in coach_line; do not require it to match the job file and never invent one. If only the QR code is readable, confirm the QR label was captured.
+    check: A QR code or serial label is visible on the battery or on a phone held at it. It does NOT need to be readable, the QR code is small; a clearly visible QR label in frame counts as scanned. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
 
   - id: disco-off
     title: Disco off
-    say: Before any connection, confirm the Disco is in the OFF position. Open the Base installer app and show me the pre-check screen.
+    say: Before any connection, the Disco must be off. Open the Base installer app and show me the pre-check screen reading Disco OFF.
     why: The Disco isolates the battery from the home and the grid. Every connection at the battery is made with it off.
     check: Either the Base installer app pre-check screen showing the Disconnect or Disco as OFF, or a disconnect switch handle clearly in the OFF position.
 
   - id: inverter
     title: Inverter
-    say: Set the inverter on the stack and seat it. Show me the inverter position on top of the stack.
+    say: The inverter seats on the top plate of the stack, on the four round mounting studs. Point to each stud in turn, then show me how the inverter would line up over them.
     why: The inverter converts the battery's DC to the home's AC. It must be fully seated on its mounts before the bus is connected.
     check: The top of the battery stack where the inverter mounts is in view, with the tech's hands placing, seating or indicating the inverter there, or an inverter unit set on the stack.
 
   - id: bus-harness
     title: Bus bar and harness
-    say: Connect the bus bar and the harness between the modules and the inverter. Show me the connection point up close.
+    say: Show me where the bus bar and harness connect on the top module. Put your hand on the connection point and hold it there.
     why: The bus bar carries battery current and the harness carries control signals. A loose connection here runs hot.
     check: A close-up of the stack's connection area (bus bar, connector, port or cable ends), with the tech's hand at it making the connection, or a cable plugged in.
 
   - id: d2i-prep
     title: D2I prep
-    say: Remove the cap from the D2I connector and prep it for routing. Show me the connector up close.
+    say: The D2I is the cable that runs out to the Disco. Hold its connector up to the glasses and pull the protective cap off the end.
     why: The D2I carries the connection out to the Disco. The cap stays on until routing so the pins stay clean.
     check: A connector, plug or cable end is held up close to the camera, or the tech's fingers are clearly removing a cap from a connector at the stack.
 
   - id: panels
     title: Panels and D2I routing
-    say: Install the side panels and route the D2I through the panel opening, then seat the top panel. Step back so I can see the enclosure.
+    say: Set the top panel over the stack, front edge first, and lower it until it sits flat and flush on every edge. Then step back so I can see the whole enclosure.
     why: The panels are the weather and touch barrier. The D2I must exit through the opening, not pinched under a panel.
     check: A white side panel is fitted against the stack and the white top panel is seated on top, shown as an assembled unit.
 
