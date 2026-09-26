@@ -34,6 +34,7 @@ export class Service {
     this.log = log;
     this.runtime = new Map();
     this.sayCounter = 0;
+    this.bootId = crypto.randomBytes(3).toString('hex'); // say ids must never repeat across restarts
     playbooks.onChange((id) => this.onPlaybookChange(id));
     if (hub) hub.snapshot = (sessionId) => this.snapshot(sessionId);
   }
@@ -125,7 +126,7 @@ export class Service {
   dispatch(s, actions) {
     for (const a of actions) {
       if (a.type === 'say') {
-        const say = { id: `${s.id.slice(0, 8)}-${++this.sayCounter}`, text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, ts: Date.now() };
+        const say = { id: `${this.bootId}-${s.id.slice(0, 8)}-${++this.sayCounter}`, text: a.text, source: a.source, interrupt: Boolean(a.interrupt), stepId: a.stepId, ts: Date.now() };
         const ev = this.store.appendEvent(s.id, { type: 'say', ...say, sayId: say.id });
         this.hub?.publish(s.id, { type: 'say', sessionId: s.id, say });
         this.hub?.publish(s.id, { type: 'event', sessionId: s.id, event: ev });
@@ -168,20 +169,31 @@ export class Service {
     return this.publicSession(s);
   }
 
+  /** Jobs nobody has touched for a while (rehearsals, a phone left in a bag) get closed. */
+  sweepIdle(maxIdleMs = 30 * 60_000) {
+    const now = Date.now();
+    for (const s of this.store.all()) {
+      if (s.status === 'active' && now - s.updatedAt > maxIdleMs && !this.hub?.glassesOnline(s.id)) {
+        s.status = 'ended';
+        s.endedAt = now;
+        this.dispatch(s, [{ type: 'event', event: 'session.ended', reason: 'idle' }]);
+        this.log(`session ${s.id.slice(0, 8)} ended after ${Math.round((now - s.updatedAt) / 60000)} idle minutes`);
+      }
+    }
+  }
+
   // ---- frames --------------------------------------------------------------
 
   ingestFrame(id, buf) {
     const s = this.must(id);
     const mime = sniffImage(buf);
     if (!mime) throw new HttpError(415, 'frame must be a JPEG, PNG or WebP image');
+    if (s.status !== 'active') return { frameId: null, analyzing: false, reason: `session is ${s.status}` };
     const frameId = this.store.saveFrame(id, buf);
     s.frames += 1;
+    s.updatedAt = Date.now();
     const ev = this.store.appendEvent(id, { type: 'frame', frameId, bytes: buf.length });
     this.hub?.publish(id, { type: 'frame', sessionId: id, frameId, ts: ev.ts });
-    if (s.status !== 'active') {
-      this.store.save(id);
-      return { frameId, analyzing: false, reason: `session is ${s.status}` };
-    }
     const r = this.rt(id);
     const job = { frameId, buf, mime, at: Date.now() };
     if (r.busy) {
@@ -189,7 +201,7 @@ export class Service {
       return { frameId, analyzing: false, queued: true };
     }
     r.busy = true;
-    r.chain = this.analyzeLoop(s, job);
+    r.chain = this.analyzeLoop(s, job).catch((e) => this.log(`analysis loop error (${id.slice(0, 8)}): ${e.message}`));
     this.publishSession(s);
     return { frameId, analyzing: true };
   }
@@ -197,15 +209,24 @@ export class Service {
   async analyzeLoop(s, first) {
     const r = this.rt(s.id);
     let job = first;
-    while (job) {
-      await this.analyzeOne(s, job);
-      const next = r.pending;
+    try {
+      while (job) {
+        await this.analyzeOne(s, job);
+        const next = r.pending;
+        r.pending = null;
+        job = next && Date.now() - next.at < STALE_FRAME_MS && s.status === 'active' ? next : null;
+      }
+    } finally {
+      // whatever happened, the crew must not stay stuck on "busy"
+      r.busy = false;
       r.pending = null;
-      job = next && Date.now() - next.at < STALE_FRAME_MS && s.status === 'active' ? next : null;
+      try {
+        this.store.save(s.id);
+        this.publishSession(s);
+      } catch (e) {
+        this.log(`could not save session ${s.id.slice(0, 8)}: ${e.message}`);
+      }
     }
-    r.busy = false;
-    this.store.save(s.id);
-    this.publishSession(s);
   }
 
   async analyzeOne(s, job) {

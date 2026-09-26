@@ -15,7 +15,9 @@
     "test": "node --test --test-concurrency=1 'test/unit/**/*.test.js'",
     "test:e2e": "node --test --test-concurrency=1 'test/e2e/**/*.test.js'",
     "simulate": "node scripts/simulate.js",
-    "check:gemini": "node scripts/check-gemini.js"
+    "check:gemini": "node scripts/check-gemini.js",
+    "archive-data": "node scripts/archive-data.js",
+    "tunnel": "npx -y cloudflared tunnel --url http://localhost:3000"
   },
   "dependencies": {
     "dotenv": "^18.0.4",

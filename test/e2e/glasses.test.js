@@ -79,9 +79,11 @@ test('full job on the phone page: camera frames -> checks -> spoken coaching -> 
   assert.equal(await page.textContent('#listen'), 'Voice commands off', 'off by default');
   await page.click('#listen');
   assert.equal(await page.textContent('#listen'), 'Voice commands on');
+  await page.evaluate(() => (window.__ba.state.loop.paused = true)); // hold the job still so there is a step to skip
   await page.waitForFunction(() => !window.__ba.speaker.speaking);
   await page.evaluate(() => window.__say('next step'));
   await waitFor(async () => (await api('GET', `/api/sessions/${id}/events`)).events.some((e) => e.type === 'command' && e.command === 'next'), { what: 'voice skip' });
+  await page.evaluate(() => (window.__ba.state.loop.paused = false));
 
   await page.waitForSelector('#done:not([hidden])', { timeout: 30000 });
   await waitFor(async () => (await spoken(page)).some((t) => /All steps (complete|done)/.test(t)), { what: 'completion line' });
@@ -179,4 +181,45 @@ test('camera permission denied shows a fix, not a crash', async () => {
 test('no console errors on the phone page', () => {
   const real = consoleErrors.filter((e) => !/favicon/.test(e));
   assert.deepEqual(real, []);
+});
+
+test('iPhone case: live socket blocked entirely, coaching still arrives over the https backup', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera'] });
+  await ctx.addInitScript(BROWSER_STUBS);
+  await ctx.addInitScript(() => {
+    // what iOS Safari does with wss:// on a self-signed cert: it never connects
+    window.WebSocket = class {
+      constructor() {
+        this.readyState = 0;
+        setTimeout(() => this.onclose?.(), 20);
+      }
+      close() {}
+      send() {}
+    };
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${env.base}/glasses`);
+  const id = await startJob(page, { playbook: 'system-check', worker: 'No Socket' });
+  await waitFor(async () => (await page.textContent('#conn')) === 'Live (backup)', { what: 'backup channel', timeout: 8000 });
+  await waitFor(async () => (await spoken(page)).some((t) => /thumbs up/.test(t)), { what: 'first instruction via backup' });
+  await api('POST', `/api/sessions/${id}/messages`, { text: 'Backup channel works.' });
+  await waitFor(async () => (await spoken(page)).includes('Backup channel works.'), { what: 'supervisor via backup' });
+  await waitFor(async () => (await page.textContent('#step-title')) !== 'Thumbs up' || (await page.isVisible('#done')), { what: 'step progress via backup', timeout: 15000 });
+  const words = await spoken(page);
+  assert.equal(words.filter((t) => t === 'Backup channel works.').length, 1, 'no double speaking');
+  await api('POST', `/api/sessions/${id}/end`);
+  await ctx.close();
+});
+
+test('supervisor restarts a finished job: the phone offers resume instead of sitting on "Job complete"', async () => {
+  const { ctx, page } = await phone(`${env.base}/glasses`);
+  const id = await startJob(page, { playbook: 'system-check', worker: 'Again Al' });
+  await page.waitForSelector('#done:not([hidden])', { timeout: 30000 });
+  await api('POST', `/api/sessions/${id}/commands`, { command: 'restart', by: 'supervisor' });
+  await page.waitForSelector('#resume:not([hidden])', { timeout: 5000 });
+  await page.click('#resume-btn');
+  await page.waitForSelector('#live:not([hidden])');
+  assert.equal(await page.textContent('#step-count'), 'Step 1 of 3');
+  await api('POST', `/api/sessions/${id}/end`);
+  await ctx.close();
 });

@@ -267,7 +267,8 @@ body {
   color: var(--color-ink-2);
 }
 
-.g-conn[data-state="online"] {
+.g-conn[data-state="online"],
+.g-conn[data-state="backup"] {
   background: var(--color-pass-soft);
   color: var(--color-pass);
 }

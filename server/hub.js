@@ -29,7 +29,12 @@ export class Hub {
 
   attach(httpServer) {
     httpServer.on('upgrade', (req, socket, head) => {
-      const url = new URL(req.url, 'http://x');
+      let url;
+      try {
+        url = new URL(req.url, 'http://x');
+      } catch {
+        return socket.destroy(); // a junk request must never take the server down
+      }
       if (url.pathname !== '/ws') return socket.destroy();
       this.wss.handleUpgrade(req, socket, head, (ws) => this.accept(ws, url));
     });

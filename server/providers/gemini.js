@@ -4,13 +4,10 @@
 
 const DEFAULT_FALLBACKS = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash'];
 
-// Each level is a smaller request than the last. We step down on a 400 and remember per model.
-const LEVELS = [
-  { thinking: true, schema: true, json: true },
-  { thinking: false, schema: true, json: true },
-  { thinking: false, schema: false, json: true },
-  { thinking: false, schema: false, json: false },
-];
+// Optional request settings. If Gemini rejects one BY NAME we drop it for that model for good;
+// any other 400 gets one bare retry for that frame only, so one odd frame can't slow the whole demo.
+const FULL = { thinking: true, schema: true, json: true };
+const BARE = { thinking: false, schema: false, json: true };
 
 const EXCLUDE = /(tts|live|image|audio|embed|transcrib|native|robotics|computer|veo|imagen|omni|aqa|learnlm|gemma|lite|thinking|translate)/i;
 
@@ -23,7 +20,7 @@ export function pickModel(models) {
     const v = name.match(/gemini-(\d+)(?:\.(\d+))?/i);
     if (!v) continue;
     const version = Number(v[1]) + Number(v[2] || 0) / 100;
-    const stable = /preview|exp|latest/i.test(name) ? 0 : 0.001;
+    const stable = /preview|exp|latest/i.test(name) ? 0 : 100; // a stable model always beats a preview
     scored.push({ name, score: version + stable });
   }
   scored.sort((a, b) => b.score - a.score);
@@ -99,7 +96,7 @@ export class GeminiProvider {
     this.timeoutMs = timeoutMs;
     this.maxRetries = maxRetries;
     this.retryDelayMs = retryDelayMs;
-    this.level = new Map(); // model -> index into LEVELS that works
+    this.level = new Map(); // model -> settings that model accepts
     this.dead = new Set(); // models that 404'd
     this.candidates = null;
     this.activeModel = null;
@@ -147,9 +144,10 @@ export class GeminiProvider {
     return body;
   }
 
-  buildBody({ image, mime, system, user, schema }, lvl) {
-    const L = LEVELS[lvl];
-    const generationConfig = { temperature: 0.2, maxOutputTokens: 1024 };
+  buildBody({ image, mime, system, user, schema }, L) {
+    // No temperature: Google recommends the default (1.0) for Gemini 3; lower values can loop.
+    // maxOutputTokens counts thinking tokens too, so leave room.
+    const generationConfig = { maxOutputTokens: 4096 };
     if (L.json) generationConfig.responseMimeType = 'application/json';
     if (L.schema && schema) generationConfig.responseSchema = schema;
     if (L.thinking) generationConfig.thinkingConfig = { thinkingLevel: 'low' };
@@ -161,16 +159,17 @@ export class GeminiProvider {
   }
 
   async callModel(model, input) {
-    let lvl = this.level.get(model) ?? 0;
+    let cfg = { ...(this.level.get(model) || FULL) };
+    let bareTried = false;
     for (;;) {
       let attempt = 0;
       for (;;) {
         try {
           const body = await this.fetchJson(`${this.baseUrl}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
             method: 'POST',
-            body: JSON.stringify(this.buildBody(input, lvl)),
+            body: JSON.stringify(this.buildBody(input, cfg)),
           });
-          this.level.set(model, lvl);
+          if (!bareTried) this.level.set(model, cfg);
           return body;
         } catch (e) {
           const transient = e.status === 0 || e.status === 429 || e.status >= 500;
@@ -179,11 +178,16 @@ export class GeminiProvider {
             await sleep(this.retryDelayMs * attempt);
             continue;
           }
-          if (e.status === 400 && lvl < LEVELS.length - 1) {
-            lvl += 1;
-            break; // retry at a smaller request level
-          }
-          throw e;
+          if (e.status !== 400) throw e;
+          const msg = e.message;
+          if (cfg.thinking && /thinking/i.test(msg)) cfg = { ...cfg, thinking: false };
+          else if (cfg.schema && /schema/i.test(msg)) cfg = { ...cfg, schema: false };
+          else if (!bareTried && (cfg.thinking || cfg.schema)) {
+            bareTried = true;
+            cfg = { ...BARE };
+          } else if (cfg.json) cfg = { ...cfg, json: false, schema: false, thinking: false };
+          else throw e;
+          break; // retry with the smaller request
         }
       }
     }

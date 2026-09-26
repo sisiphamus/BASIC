@@ -152,3 +152,30 @@ test('skips thought parts and joins text parts', async () => {
 test('missing API key fails fast with setup instructions', async () => {
   await assert.rejects(new GeminiProvider({ apiKey: '' }).analyze(input), /GEMINI_API_KEY/);
 });
+
+test('a stable model beats a newer preview', () => {
+  const models = [
+    { name: 'models/gemini-3.8-flash', supportedGenerationMethods: ['generateContent'] },
+    { name: 'models/gemini-4-flash-preview', supportedGenerationMethods: ['generateContent'] },
+  ];
+  assert.equal(pickModel(models), 'gemini-3.8-flash');
+  assert.equal(pickModel([models[1]]), 'gemini-4-flash-preview');
+});
+
+test('request follows current Gemini 3 guidance: no temperature, room for thinking tokens', async () => {
+  behave = (req, res) => reply(res, 200, candidate(JSON.stringify(OK_JSON)));
+  await provider({ model: 'm' }).analyze(input);
+  const gc = calls[0].body.generationConfig;
+  assert.equal(gc.temperature, undefined);
+  assert.equal(gc.maxOutputTokens, 4096);
+  assert.deepEqual(gc.thinkingConfig, { thinkingLevel: 'low' });
+});
+
+test('a one-off 400 that names no setting is retried bare once and NOT remembered', async () => {
+  behave = (req, res, body, n) => (n === 1 ? reply(res, 400, { error: { code: 400, message: 'Request contains an invalid argument.' } }) : reply(res, 200, candidate(JSON.stringify(OK_JSON))));
+  const p = provider({ model: 'm' });
+  await p.analyze(input);
+  assert.equal(calls[1].body.generationConfig.thinkingConfig, undefined, 'bare retry');
+  await p.analyze(input);
+  assert.ok(calls[2].body.generationConfig.thinkingConfig, 'next frame uses full settings again');
+});

@@ -78,3 +78,17 @@ test('library loads a directory, saves, rejects bad saves without touching disk'
   assert.throws(() => lib.save('other', MIN), /id/);
   assert.throws(() => lib.save('../evil', MIN), /id/);
 });
+
+test('a broken save from an editor keeps the last good version live', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pb-'));
+  fs.writeFileSync(path.join(dir, 't.yaml'), MIN);
+  const lib = new PlaybookLibrary(dir).load();
+  fs.writeFileSync(path.join(dir, 't.yaml'), 'id: t\ntitle: [half saved');
+  lib.load();
+  assert.equal(lib.get('t').steps[0].say, 'Do A');
+  assert.equal(lib.errors().length, 1);
+  fs.writeFileSync(path.join(dir, 't.yaml'), MIN.replace('Do A', 'Do A2'));
+  lib.load();
+  assert.equal(lib.get('t').steps[0].say, 'Do A2');
+  assert.equal(lib.errors().length, 0);
+});

@@ -2,9 +2,10 @@
 // so normal talk on site ("next to the window") doesn't trigger anything.
 
 const PHRASES = [
-  ['next', /^(?:ok(?:ay)? )?(?:next|next step|skip|skip it|skip this|done|move on)$/],
-  ['repeat', /^(?:repeat|say (?:that|it) again|again|what(?:'s| is| was) (?:the|this) step|come again|pardon)$/],
-  ['help', /^(?:help|help me|why|what(?:'s| is) this for|how do i do (?:this|that)|i'm stuck|im stuck)$/],
+  // No bare "done", "skip", "again" or "why": people say those on site all the time.
+  ['next', /^(?:ok(?:ay)? )?(?:next|next step|skip (?:this )?step|move on)$/],
+  ['repeat', /^(?:repeat|repeat that|say (?:that|it) again|what(?:'s| is| was) (?:the|this) step)$/],
+  ['help', /^(?:help|help me|what(?:'s| is) this for|how do i do (?:this|that)|i'm stuck|im stuck)$/],
   ['back', /^(?:back|go back|previous|previous step|last step)$/],
 ];
 

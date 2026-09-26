@@ -60,6 +60,7 @@ export const BROWSER_STUBS = () => {
     cancel() {
       window.__cancels += 1;
     },
+    resume() {},
   };
   Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
   class FakeRec {

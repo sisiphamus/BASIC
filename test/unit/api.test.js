@@ -297,3 +297,72 @@ test('restart: sessions, events and footage survive and the job continues', asyn
   const evs2 = (await api('GET', `/api/sessions/${s.id}/events`)).body.events;
   assert.ok(evs2[evs2.length - 1].seq > evs[evs.length - 1].seq);
 });
+
+// ---- regressions from the code review ----
+
+test('say ids never repeat after a server restart (the phone would skip them)', async () => {
+  const s = await newSession({ worker: 'Id Check' });
+  const before = (await api('GET', `/api/sessions/${s.id}/events`)).body.events.filter((e) => e.type === 'say').map((e) => e.sayId);
+  await srv.close();
+  await boot();
+  await api('POST', `/api/sessions/${s.id}/messages`, { text: 'After restart.' });
+  const after = (await api('GET', `/api/sessions/${s.id}/events`)).body.events.filter((e) => e.type === 'say').map((e) => e.sayId);
+  const fresh = after.filter((x) => !before.includes(x));
+  assert.equal(fresh.length, 1);
+  assert.equal(new Set(after).size, after.length, 'all say ids unique');
+});
+
+test('a junk WebSocket upgrade request does not crash the server', async () => {
+  const net = await import('node:net');
+  await new Promise((resolve) => {
+    const sock = net.connect(srv.port, '127.0.0.1', () => sock.write('GET //[ HTTP/1.1\r\nHost: x\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n'));
+    sock.on('close', resolve);
+    sock.on('error', resolve);
+  });
+  assert.equal((await api('GET', '/api/health')).status, 200);
+});
+
+test('a failure while recording an error does not leave the crew stuck', async () => {
+  const s = await newSession({ worker: 'Stuck Check' });
+  const orig = srv.store.appendEvent.bind(srv.store);
+  let boom = 0;
+  srv.store.appendEvent = (id, ev) => {
+    if (ev.type === 'model.error' && boom++ === 0) throw new Error('disk full');
+    return orig(id, ev);
+  };
+  mock.enqueue(new Error('model down'));
+  await api('POST', `/api/sessions/${s.id}/frames`, JPEG);
+  await srv.service.idle(s.id);
+  srv.store.appendEvent = orig;
+  mock.enqueue(r('pass'));
+  const up = (await api('POST', `/api/sessions/${s.id}/frames`, JPEG)).body;
+  assert.equal(up.analyzing, true, 'next frame is analyzed, not queued forever');
+  await srv.service.idle(s.id);
+  assert.equal((await api('GET', `/api/sessions/${s.id}`)).body.current, 1);
+});
+
+test('jobs idle for a long time are closed; active ones are not', async () => {
+  const idle = await newSession({ worker: 'Idle Ida' });
+  const busy = await newSession({ worker: 'Busy Bea' });
+  srv.store.get(idle.id).updatedAt = Date.now() - 31 * 60_000;
+  srv.service.sweepIdle();
+  assert.equal((await api('GET', `/api/sessions/${idle.id}`)).body.status, 'ended');
+  assert.equal((await api('GET', `/api/sessions/${busy.id}`)).body.status, 'active');
+});
+
+test('frames sent after a job ends are not stored', async () => {
+  const s = await newSession();
+  await api('POST', `/api/sessions/${s.id}/end`);
+  const up = (await api('POST', `/api/sessions/${s.id}/frames`, JPEG)).body;
+  assert.equal(up.frameId, null);
+  assert.equal((await api('GET', `/api/sessions/${s.id}/frames`)).body.frames.length, 0);
+});
+
+test('large JSON frame uploads are accepted (not cut off by the small JSON limit)', async () => {
+  const s = await newSession();
+  mock.enqueue(r('unclear', 0.2));
+  const big = Buffer.concat([JPEG, Buffer.alloc(400 * 1024)]);
+  const up = await api('POST', `/api/sessions/${s.id}/frames`, { image: big.toString('base64') });
+  assert.equal(up.status, 200);
+  await srv.service.idle(s.id);
+});

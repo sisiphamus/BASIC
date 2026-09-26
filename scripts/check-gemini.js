@@ -40,7 +40,8 @@ const started = Date.now();
 try {
   const out = await provider.analyze({ image, mime: 'image/jpeg', system: SYSTEM_PROMPT, user: buildUserPrompt(session), schema: RESPONSE_SCHEMA, sessionId: 'check' });
   console.log(`   model: ${out.model}   time: ${Date.now() - started} ms`);
-  console.log(`   request level used: ${provider.level.get(out.model)} (0 = full settings, higher = fell back)`);
+  const cfg = provider.level.get(out.model) || {};
+  console.log(`   settings accepted: thinking=${cfg.thinking} schema=${cfg.schema} (both true is best)`);
   console.log(JSON.stringify(out.result, null, 2));
   console.log('\nGemini works. Start the server with npm start.');
 } catch (e) {

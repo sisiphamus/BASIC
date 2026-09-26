@@ -33,6 +33,16 @@ No key? The server runs a built-in walkthrough model that fakes believable resul
 4. On the phone: enter a name, pick **Glasses system check**, press Start. It asks for a thumbs up, three fingers, then any screen. If you hear "System check complete", the whole loop works: camera, server, Gemini, voice.
 5. Then run **Battery set and commission** with the props (below).
 
+## Before you go on stage
+
+- **Run `npm run check:gemini` at the venue.** It must end with "Gemini works" and `thinking=true schema=true`. `GEMINI_MODEL` is pinned to `gemini-3.8-flash` in `env.example`.
+- **Use a billing-enabled key.** Each crew sends a request every 2-3 seconds, which is about 20-40 a minute per crew. Free-tier limits are around that, so the simulator with several crews will hit 429s. Check your limits in AI Studio.
+- **Use a phone hotspot for the laptop and the demo phone.** Venue Wi-Fi often blocks phones from reaching laptops. On an open network anyone could also post messages to the glasses (there's no login).
+- **iPhone:** Safari accepts the certificate warning for the page but not for the live connection. The page notices and switches to a backup channel over https (the badge shows "Live (backup)"), so coaching still plays, with up to a second of extra delay. For the full live connection, run `npm run tunnel` and open the `https://...trycloudflare.com/glasses` link it prints. That has a real certificate, but it goes over the internet.
+- **Screen:** set the phone's Auto-Lock to Never. The page asks the phone to stay awake, but not every phone listens.
+- **Clean floor:** stop the server, run `npm run archive-data` (moves rehearsal jobs into `data/archive/`, nothing is deleted), and start again. Jobs untouched for 30 minutes also close on their own.
+- **Changed Wi-Fi?** The certificate is remade automatically for the new address. The phone will show the warning once more.
+
 ## Hooking up the glasses
 
 There are three ways. A is the one to trust on stage.

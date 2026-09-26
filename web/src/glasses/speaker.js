@@ -34,17 +34,24 @@ export class Speaker {
   }
 
   /** Must run inside a tap handler once, or iOS/Safari stays silent. */
-  unlock(text = 'Base Academy is ready.') {
+  unlock(text = 'Base Academy is ready.', { silent = false } = {}) {
     if (!this.synth) return;
     this.synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(silent ? ' ' : text);
+    if (silent) u.volume = 0;
     u.rate = this.rate;
     if (this.voice) u.voice = this.voice;
+    try {
+      this.synth.resume(); // phones can leave the synth paused after the app was in the background
+    } catch {
+      /* ignore */
+    }
     this.synth.speak(u);
   }
 
   get speaking() {
-    return Boolean(this.current) || Date.now() - this.lastSpokeAt < 700;
+    // Speech results can arrive well after the words were heard; keep a generous guard.
+    return Boolean(this.current) || Date.now() - this.lastSpokeAt < 2000;
   }
 
   say(item) {
@@ -61,7 +68,10 @@ export class Speaker {
       this.stopCurrent();
       const keep = this.queue.filter((q) => q.source === 'step' || q.source === 'supervisor' || q.source === 'system');
       this.queue = [item, ...(cut && cut.source === 'step' ? [cut] : []), ...keep];
-      return this.pump();
+      // Speaking right after cancel() is dropped silently by some Safari/Chrome builds. Give it a beat.
+      this.holdUntil = Date.now() + 120;
+      setTimeout(() => this.pump(), 120);
+      return;
     }
     this.queue.push(item);
     // Never fall far behind. Drop tips and rule reminders first, step instructions last.
@@ -94,6 +104,7 @@ export class Speaker {
 
   pump() {
     if (this.current || !this.queue.length) return;
+    if (this.holdUntil && Date.now() < this.holdUntil) return;
     const item = this.queue.shift();
     this.onStart(item);
     if (this.muted || !this.synth) {
@@ -125,6 +136,11 @@ export class Speaker {
         done();
       }
     }, 2500 + item.text.length * 85);
+    try {
+      this.synth.resume(); // phones can leave the synth paused after the app was in the background
+    } catch {
+      /* ignore */
+    }
     this.synth.speak(u);
   }
 }

@@ -31,8 +31,16 @@ export async function loadCert(dir) {
   fs.mkdirSync(dir, { recursive: true });
   const keyPath = path.join(dir, 'key.pem');
   const certPath = path.join(dir, 'cert.pem');
-  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
+  const ipsPath = path.join(dir, 'ips.json');
   const ips = lanAddresses();
+  // Reuse the certificate only if it was made for the addresses this laptop has now (new Wi-Fi = new cert).
+  let covered = [];
+  try {
+    covered = JSON.parse(fs.readFileSync(ipsPath, 'utf8'));
+  } catch {
+    covered = [];
+  }
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath) && ips.every((ip) => covered.includes(ip))) return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
   const attrs = [{ name: 'commonName', value: 'base-academy.local' }];
   const pems = await selfsigned.generate(attrs, {
     notAfterDate: new Date(Date.now() + 800 * 24 * 3600 * 1000),
@@ -42,6 +50,7 @@ export async function loadCert(dir) {
   });
   fs.writeFileSync(keyPath, pems.private);
   fs.writeFileSync(certPath, pems.cert);
+  fs.writeFileSync(ipsPath, JSON.stringify(ips));
   return { key: pems.private, cert: pems.cert };
 }
 
@@ -59,6 +68,9 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
   const store = new Store(dataDir).load();
   const hub = new Hub();
   const service = new Service({ store, playbooks, provider, hub, log });
+  service.sweepIdle();
+  const sweeper = setInterval(() => service.sweepIdle(), 5 * 60_000);
+  sweeper.unref();
 
   const urls = {};
   const info = () => ({ urls });
@@ -98,6 +110,7 @@ export async function start({ port = Number(process.env.PORT || 3000), httpsPort
   log(`  model:          ${d.provider}${d.provider === 'mock' ? ' (no GEMINI_API_KEY set, using the built-in walkthrough)' : ` ${d.model}`}`);
 
   const close = async () => {
+    clearInterval(sweeper);
     store.flush();
     hub.close();
     playbooks.close();
@@ -124,5 +137,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     else console.error(e);
     process.exit(1);
   });
+  // Last line of defense during a live demo: log and keep serving.
   process.on('unhandledRejection', (e) => console.error('unhandled:', e));
+  process.on('uncaughtException', (e) => console.error('uncaught (server kept running):', e));
 }

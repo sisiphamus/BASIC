@@ -6,7 +6,8 @@ import { HttpError, sniffImage } from './service.js';
 export function createApp({ service, playbooks, provider, hub, staticDir, info = () => ({}) }) {
   const app = express();
   app.disable('x-powered-by');
-  app.use(express.json({ limit: '256kb' }));
+  const json = express.json({ limit: '256kb' });
+  app.use((req, res, next) => (/^\/api\/sessions\/[^/]+\/frames$/.test(req.path) ? next() : json(req, res, next)));
 
   const wrap = (fn) => async (req, res) => {
     try {

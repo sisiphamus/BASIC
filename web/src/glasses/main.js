@@ -33,6 +33,10 @@ const state = {
   speakHere: true,
   lastLatency: null,
   endArmed: false,
+  lastSeq: 0,
+  socketState: 'connecting',
+  socketStateAt: Date.now(),
+  poller: null,
 };
 
 const speaker = new Speaker({
@@ -145,7 +149,8 @@ $('start-form').addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Starting';
   // Unlock audio now, inside the tap. Browsers block speech that isn't started by a tap.
-  if (state.speakHere) speaker.unlock();
+  // Unlock inside the tap even when muted here, so turning speech on later still works on iPhones.
+  speaker.unlock(undefined, { silent: !state.speakHere });
   try {
     const kind = source.startsWith('device:') ? 'device' : source;
     state.stream = await openSource(kind, kind === 'device' ? source.slice(7) : undefined);
@@ -221,7 +226,12 @@ async function goLive(session) {
   state.socket = new LiveSocket(`${proto}://${location.host}/ws?role=glasses&session=${session.id}`, {
     onMessage: onSocket,
     onState: (s) => {
+      if (s !== state.socketState) {
+        state.socketState = s;
+        state.socketStateAt = Date.now();
+      }
       const el = $('conn');
+      if (s !== 'online' && Date.now() - (state.backupOkAt || 0) < 3000) return; // backup channel is carrying us
       el.dataset.state = s;
       el.textContent = s === 'online' ? 'Live' : s === 'reconnecting' ? 'Reconnecting' : 'Connecting';
     },
@@ -230,6 +240,58 @@ async function goLive(session) {
   if (!state.speakHere) speaker.setMuted(true);
   setupVoice();
   keepAwake();
+  startPoller(session.id);
+}
+
+// Backup channel. iPhones accept the self-signed certificate for the page but not for the live
+// socket, and venue Wi-Fi can block sockets. If the socket isn't up after 3 s, fetch the spoken
+// lines over plain https every second so the crew still hears everything.
+function startPoller(id) {
+  clearInterval(state.poller);
+  let busy = false;
+  let primed = false;
+  state.poller = setInterval(async () => {
+    if (busy || state.sessionId !== id) return;
+    if (state.socket?.online || Date.now() - state.socketStateAt < 3000) return;
+    busy = true;
+    try {
+      const { events } = await api('GET', `/api/sessions/${id}/events?since=${state.lastSeq}`);
+      for (const e of events) {
+        state.lastSeq = Math.max(state.lastSeq, e.seq);
+        // on the first poll only replay recent lines, not the whole job
+        if (e.type === 'say' && (primed || Date.now() - e.ts < 15_000)) handleSay({ id: e.sayId, text: e.text, source: e.source, interrupt: Boolean(e.interrupt), stepId: e.stepId, ts: e.ts });
+      }
+      primed = true;
+      const s = await api('GET', `/api/sessions/${id}`);
+      onSession(s);
+      state.backupOkAt = Date.now();
+      const el = $('conn');
+      el.dataset.state = 'backup';
+      el.textContent = 'Live (backup)';
+    } catch {
+      /* keep trying */
+    } finally {
+      busy = false;
+    }
+  }, 1000);
+}
+
+function handleSay(say) {
+  if (state.speakHere) speaker.say(say);
+  else showSaid(say);
+}
+
+function onSession(s) {
+  const wasDone = !$('done').hidden;
+  state.session = s;
+  state.lastLatency = s.live?.lastLatencyMs ?? state.lastLatency;
+  // Supervisor restarted a finished job: come back to a one-tap resume (camera needs a tap).
+  if (wasDone && s.status === 'active') {
+    show('setup');
+    offerResume();
+    return;
+  }
+  render();
 }
 
 function onSocket(msg) {
@@ -239,17 +301,13 @@ function onSocket(msg) {
       state.session = s;
       render();
     }
-    for (const say of msg.says || []) {
-      if (state.speakHere) speaker.say(say);
-      else showSaid(say);
-    }
+    for (const say of msg.says || []) handleSay(say);
   } else if (msg.type === 'session' && msg.session.id === state.sessionId) {
-    state.session = msg.session;
-    state.lastLatency = msg.session.live?.lastLatencyMs ?? state.lastLatency;
-    render();
+    onSession(msg.session);
+  } else if (msg.type === 'event' && msg.sessionId === state.sessionId) {
+    state.lastSeq = Math.max(state.lastSeq, msg.event.seq || 0);
   } else if (msg.type === 'say' && msg.sessionId === state.sessionId) {
-    if (state.speakHere) speaker.say(msg.say);
-    else showSaid(msg.say);
+    handleSay(msg.say);
   }
 }
 
@@ -408,6 +466,9 @@ function teardown(all) {
   state.wakeLock?.release?.().catch(() => {});
   state.wakeLock = null;
   if (all) {
+    clearInterval(state.poller);
+    state.poller = null;
+    state.lastSeq = 0;
     state.socket?.close();
     state.socket = null;
     state.session = null;
@@ -421,13 +482,17 @@ function teardown(all) {
 async function keepAwake() {
   try {
     state.wakeLock = await navigator.wakeLock?.request('screen');
+    // The browser drops the lock whenever the page is hidden; forget it so we ask again.
+    state.wakeLock?.addEventListener?.('release', () => {
+      state.wakeLock = null;
+    });
   } catch {
     /* not supported or denied; the crew may need to keep the screen on manually */
   }
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && state.sessionId && !state.wakeLock) keepAwake();
+  if (document.visibilityState === 'visible' && state.sessionId && (!state.wakeLock || state.wakeLock.released)) keepAwake();
 });
 
 // After a reload mid-job, offer one tap to pick up where the crew left off

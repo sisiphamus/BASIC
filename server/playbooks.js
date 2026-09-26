@@ -93,18 +93,32 @@ export class PlaybookLibrary {
   }
 
   load() {
-    this.byId.clear();
-    this.sources.clear();
+    const prevById = new Map(this.byId);
+    const prevSources = new Map(this.sources);
+    const prevFile = new Map(this.fileOf || []);
+    this.byId = new Map();
+    this.sources = new Map();
+    this.fileOf = new Map();
     this.loadErrors = [];
     fs.mkdirSync(this.dir, { recursive: true });
     for (const f of fs.readdirSync(this.dir).filter((f) => /\.ya?ml$/.test(f)).sort()) {
-      const src = fs.readFileSync(path.join(this.dir, f), 'utf8');
       try {
+        const src = fs.readFileSync(path.join(this.dir, f), 'utf8');
         const pb = parsePlaybook(src);
         this.byId.set(pb.id, pb);
         this.sources.set(pb.id, src);
+        this.fileOf.set(pb.id, f);
       } catch (e) {
+        if (e.code === 'ENOENT') continue; // renamed away mid-save by an editor
         this.loadErrors.push({ file: f, error: e.message });
+        // A half-saved or broken file keeps the last good version live, so running crews aren't hurt.
+        for (const [id, file] of prevFile) {
+          if (file === f && !this.byId.has(id)) {
+            this.byId.set(id, prevById.get(id));
+            this.sources.set(id, prevSources.get(id));
+            this.fileOf.set(id, f);
+          }
+        }
       }
     }
     return this;
@@ -137,6 +151,7 @@ export class PlaybookLibrary {
     fs.renameSync(tmp, file);
     this.byId.set(id, pb);
     this.sources.set(id, source);
+    (this.fileOf ||= new Map()).set(id, `${id}.yaml`);
     this.emit(id);
     return pb;
   }
@@ -158,9 +173,13 @@ export class PlaybookLibrary {
       this.watcher = fs.watch(this.dir, () => {
         clearTimeout(timer);
         timer = setTimeout(() => {
-          const before = new Map(this.sources);
-          this.load();
-          for (const [id, src] of this.sources) if (before.get(id) !== src) this.emit(id);
+          try {
+            const before = new Map(this.sources);
+            this.load();
+            for (const [id, src] of this.sources) if (before.get(id) !== src) this.emit(id);
+          } catch (e) {
+            console.error(`playbook reload failed: ${e.message}`);
+          }
         }, 150);
       });
     } catch {

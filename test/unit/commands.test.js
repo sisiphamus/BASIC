@@ -14,6 +14,11 @@ test('matches short command phrases', () => {
 test('ignores normal talk that merely contains a command word', () => {
   assert.equal(matchCommand('put it next to the window'), null);
   assert.equal(matchCommand('I need help carrying this later maybe'), null);
+  assert.equal(matchCommand('done'), null);
+  assert.equal(matchCommand('skip'), null);
+  assert.equal(matchCommand('again'), null);
+  assert.equal(matchCommand('why'), null);
+  assert.equal(matchCommand('skip this step'), 'next');
   assert.equal(matchCommand(''), null);
   assert.equal(matchCommand(undefined), null);
 });
