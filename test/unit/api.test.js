@@ -445,3 +445,10 @@ test('a crew that reconnects gets supervisor messages from the last two minutes'
   assert.ok(!texts.some((t) => /Measure from the battery/.test(t)), 'old step lines are not replayed');
   g.ws.close();
 });
+
+test('a playbook\'s scene context reaches the model prompt', async () => {
+  const { buildUserPrompt } = await import('../../server/prompt.js');
+  const s = srv.store.get((await newSession()).id);
+  s.context = 'Filmed hackathon demo. Speak formally.';
+  assert.match(buildUserPrompt(s), /SCENE CONTEXT: Filmed hackathon demo\. Speak formally\./);
+});

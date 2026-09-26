@@ -23,6 +23,7 @@ export function createSession({ playbook, worker, mode = 'crew', job = {}, now =
     mode: mode === 'trainee' ? 'trainee' : 'crew',
     playbookId: playbook.id,
     playbookTitle: playbook.title,
+    context: playbook.context || '',
     frameIntervalMs: playbook.frame_interval_ms,
     job: { ...playbook.job, ...job },
     stepDefs: playbook.steps.map((s) => ({ ...s })),
@@ -158,7 +159,8 @@ export function applyAnalysis(session, result, { now = Date.now(), frameId = nul
   if (sc.status === 'pass' && confident) {
     st.evidence = sc.evidence || '';
     st.frameId = frameId;
-    say(session, actions, fillTemplate(d.pass_say, vars(session)), { source: 'step', now, force: true });
+    // No scripted confirmation? Speak the model's own, based on what it saw.
+    say(session, actions, fillTemplate(d.pass_say, vars(session)) || sc.coach_line, { source: 'step', now, force: true });
     finishStep(session, 'pass', now, actions, { evidence: st.evidence, frameId });
   } else if (sc.status === 'fail' && confident) {
     st.fails += 1;
@@ -273,6 +275,7 @@ export function refreshFromPlaybook(session, playbook) {
     if (byId.has(st.id)) st.title = byId.get(st.id).title;
   });
   session.job = { ...playbook.job, ...session.job };
+  session.context = playbook.context || '';
 }
 
 export function trainingRecord(sessions, worker, { signOffAfter = 2 } = {}) {

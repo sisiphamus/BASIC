@@ -9,7 +9,7 @@ Your job for every frame:
    - "fail": the thing being checked is clearly visible and clearly does NOT meet the check.
    - "unclear": the thing is not in frame, blurry, too far, too dark, or you cannot read it. When in doubt, use "unclear". Never guess a number you cannot read.
    Put what you actually see in "evidence" (for example "tape reads 28 inches at the window frame"). Give "confidence" from 0 to 1.
-   If the status is fail or unclear, put one short spoken sentence in "coach_line" telling the tech what to do next (under 15 words, plain words, no jargon).
+   Always put one short spoken sentence in "coach_line" (under 20 words): on pass, confirm precisely what you verified; on fail or unclear, tell the tech exactly what to do next. Follow any SCENE CONTEXT for tone and vocabulary.
 3. Check every WATCH RULE. List a rule in "rules" only if its condition is clearly visible in this frame. Use the rule's exact id. Add "evidence", and a short spoken "line" (under 15 words) the tech should hear.
 
 Reply with JSON only.`;
@@ -53,6 +53,7 @@ export function buildUserPrompt(session) {
     .join('\n');
 
   const lines = [
+    session.context ? `SCENE CONTEXT: ${session.context}` : '',
     `JOB: ${session.playbookTitle}`,
     job ? `JOB FILE:\n${job}` : '',
     `CURRENT STEP (${i + 1} of ${session.steps.length}) id="${st.id}": ${step.title}`,

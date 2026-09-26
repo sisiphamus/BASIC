@@ -31,6 +31,8 @@ const PlaybookSchema = z.object({
   id: slug,
   title: text.min(1),
   summary: optText,
+  // What the model should know about the scene and how to talk (e.g. "filmed demo, not at a house").
+  context: optText,
   frame_interval_ms: z.number().int().min(500).max(30000).default(2000),
   job: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}),
   steps: z.array(StepSchema).min(1, 'a playbook needs at least one step in `steps`'),

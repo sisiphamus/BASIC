@@ -1,0 +1,88 @@
+# Visit 2, the battery install, as the Base team does it: set the stack, scan it to the job,
+# plug in, dress the enclosure (four side panels, then the top panel), commission, closeout photos.
+# Only the instructions are fixed. Every confirmation, correction and hint is written by the model
+# from what it sees, in the voice described in `context`.
+
+id: base-install
+title: Base battery install (visit 2)
+summary: Set the stack, scan it to the job, connect, install side and top panels, commission, closeout photos.
+frame_interval_ms: 2000
+
+context: >-
+  This is a live, filmed hackathon demonstration for Base Power. The tech is setting up a real Base
+  battery, but it is NOT at a customer's house: expect a warehouse, yard or showroom, no house wall,
+  no pad, no meter. Never fail a step because the house, wall, pad or site is missing; judge only the
+  battery and what the tech is doing to it. The tech may only pretend some actions (for example
+  pointing a phone at the label to "scan" it, or showing a commissioning screen); accept a clear,
+  deliberate pretend action as done. Speak like a senior Base field supervisor coaching a new
+  installer: formal, precise, calm, technical vocabulary (enclosure, side panels, top panel, module
+  stack, integrated base, harness, connector, serial label, commissioning, closeout). No slang, no
+  jokes, no exclamation marks. Reference facts from Base's install requirements only when they apply:
+  each battery occupies a 3 ft by 3 ft footprint, about 36 inches tall, on an integrated base; it sits
+  within 1 ft of the wall, within 20 ft of the meter, at least 3 ft from gas meters, and never in front
+  of windows, meters or panels. Never invent a serial number, reading or measurement you cannot read.
+
+job:
+  customer: Ron Swanson
+  address: 2305 Goldsmith St, Houston TX
+  job_number: BP-24-1187
+
+steps:
+  - id: stack-set
+    title: Stack set
+    say: Job BP-24-1187. Begin with the battery stack set in position, enclosure panels off. Step back so I can see the full stack.
+    why: The stack sits on its integrated base. It must be level and fully seated before any panel or connection goes on.
+    check: A Base battery stack is visible with its enclosure panels off or open, standing upright and set down on the ground or floor, most of it in frame.
+
+  - id: serial-scan
+    title: Serial scan
+    say: Scan the serial label to register this unit to the job. Hold the label steady in front of the camera, or scan it with your phone.
+    why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
+    check: Either a serial, barcode or QR label on the battery is close and in focus, or a phone is clearly being held up to scan a label on the battery. If a serial number is readable, report it exactly in evidence.
+
+  - id: plug-in
+    title: Power and communication connection
+    say: Connect the power and communication harness to the stack. Seat the connector until the latch engages, then show me the connection up close.
+    why: A partly seated connector runs hot. It is the most common cause of a unit dropping into maintenance mode after install.
+    check: A cable connector or harness is plugged into the battery stack, or the tech's hands are clearly connecting one, shown up close.
+
+  - id: side-panels
+    title: Side panels
+    say: Install the four side panels. Align each panel to the frame and confirm it is flush before moving to the next.
+    why: The side panels are the weather and touch barrier for the stack. A gap lets in water and debris.
+    check: Enclosure side panels are being fitted or are installed on the battery, with at least the front and one side panel on and sitting flush.
+
+  - id: top-panel
+    title: Top panel
+    say: Install the top panel last. Seat it across all four side panels, then step back so I can see the full enclosure.
+    why: The top panel locks the enclosure closed. It goes on only after every side panel is flush.
+    check: The battery enclosure is complete, with the top panel on and the enclosure closed, shown as one finished white Base unit.
+
+  - id: commission
+    title: Commissioning
+    say: Commission the system. Open the installer app on your phone and show me the commissioning screen.
+    why: Commissioning brings the unit online and confirms it is reporting before the crew leaves. Base expects it to appear in the app within 24 to 48 hours.
+    check: A phone or tablet screen is clearly shown, displaying an app, a commissioning or status screen, or an online or connected state.
+
+  - id: closeout-front
+    title: Closeout photo, front
+    say: Closeout photos. First the front. Stand square to the unit, about six feet back, with the whole enclosure in frame.
+    why: The closeout photos are the permanent record of the finished install, for the customer file and the inspector.
+    check: The finished battery enclosure is shown from the front, fully in frame, reasonably level and in focus.
+
+  - id: closeout-label
+    title: Closeout photo, labels and side
+    say: Last closeout photo. Show me a side of the unit with the nameplate or warning label readable.
+    why: Code and our records require the labels to be present and legible at handoff.
+    check: A side of the finished battery enclosure is shown with a label, badge or nameplate visible and legible, for example the BASE badge or a warning label.
+
+watch:
+  - id: hands-in-live-enclosure
+    when: Bare hands are inside the open battery stack touching terminals, busbars or exposed conductors.
+    say: ''
+    cooldown_s: 30
+
+  - id: debris-on-unit
+    when: Tools, packaging, screws or debris are left on top of the battery or its panels after the enclosure is closed.
+    say: ''
+    cooldown_s: 45

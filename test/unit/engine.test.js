@@ -199,3 +199,26 @@ test('training record counts unaided passes per skill across sessions', () => {
   assert.equal(a.signedOff, false);
   assert.equal(rec.sessions, 2);
 });
+
+test('with no scripted pass line, the model\'s own confirmation is spoken', () => {
+  const pb = parsePlaybook(`
+id: g
+title: Generated
+context: Filmed demo, not at a house.
+steps:
+  - id: a
+    title: A
+    say: Do A
+    check: A visible
+  - id: b
+    title: B
+    say: Do B
+    check: B visible
+`);
+  assert.equal(pb.context, 'Filmed demo, not at a house.');
+  const { session } = createSession({ playbook: pb, worker: 'X', now: 0, id: 'g1' });
+  const a = applyAnalysis(session, { step: { id: 'a', status: 'pass', confidence: 0.9, evidence: 'e', coach_line: 'Stack is plumb on its integrated base.' }, rules: [] }, { now: 1000 });
+  assert.deepEqual(said(a), ['Stack is plumb on its integrated base.', 'Do B']);
+  const f = applyAnalysis(session, { step: { id: 'b', status: 'fail', confidence: 0.9, evidence: 'e', coach_line: 'Seat the connector fully.' }, rules: [] }, { now: 2000 });
+  assert.deepEqual(said(f), ['Seat the connector fully.']);
+});

@@ -10,7 +10,7 @@ import path from 'node:path';
 import { normalizeResult, parseModelJson } from './gemini.js';
 
 const JSON_SHAPE = `Reply with one JSON object only, no prose, in exactly this shape:
-{"scene": "<one sentence>", "step": {"status": "pass" | "fail" | "unclear", "evidence": "<what you see>", "confidence": <0..1>, "coach_line": "<short spoken sentence if fail/unclear>"}, "rules": [{"id": "<rule id>", "evidence": "<what you see>", "line": "<short spoken sentence>"}]}`;
+{"scene": "<one sentence>", "step": {"status": "pass" | "fail" | "unclear", "evidence": "<what you see>", "confidence": <0..1>, "coach_line": "<one short spoken sentence: confirm on pass, instruct on fail/unclear>"}, "rules": [{"id": "<rule id>", "evidence": "<what you see>", "line": "<short spoken sentence>"}]}`;
 
 export class ClaudeCliProvider {
   constructor({ bin = process.env.BA_CLAUDE_BIN || 'claude', model = process.env.BA_CLAUDE_MODEL || 'sonnet', effort = process.env.BA_CLAUDE_EFFORT || 'low', timeoutMs = Number(process.env.BA_CLAUDE_TIMEOUT_MS || 30_000) } = {}) {
