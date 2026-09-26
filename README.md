@@ -43,6 +43,41 @@ No key? The server runs a built-in walkthrough model that fakes believable resul
 - **Clean floor:** stop the server, run `npm run archive-data` (moves rehearsal jobs into `data/archive/`, nothing is deleted), and start again. Jobs untouched for 30 minutes also close on their own.
 - **Changed Wi-Fi?** The certificate is remade automatically for the new address. The phone will show the warning once more.
 
+## The glasses app (Android): photos straight from the glasses
+
+`android/` is a small Android app built on Meta's Wearables Device Access Toolkit. Once set up, it:
+
+- connects to the glasses by itself whenever they're on and paired,
+- takes a **full-resolution photo from the glasses camera every 2 seconds** and uploads it to the server,
+- speaks every reply through the glasses (Android text-to-speech on media audio, which goes to the glasses' speakers),
+- keeps running with the phone screen off (foreground service),
+- shows up on the dashboard like any other crew.
+
+**One-time setup**
+
+1. In the Meta AI app, pair the glasses and turn on **Developer Mode**. No Meta developer account or App ID is needed in Developer Mode; the app ships with `0/0` as Meta's docs specify.
+2. Build and install from this laptop (JDK 17 and the Android SDK are in `~/Android`):
+   ```bash
+   cd android
+   JAVA_HOME=~/Android/jdk-17.0.20.1+1 ./gradlew assembleDebug
+   ~/Android/sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk
+   ```
+3. Open **Base Academy** on the phone. Enter your name and the server address, then tap **Connect glasses (one time)**. That hops to Meta AI to approve and comes back. Then tap **Start**, and **Allow glasses camera** if it asks.
+
+**Server address from the phone**
+
+- Phone plugged into the laptop: `adb reverse tcp:3000 tcp:3000`, then use `http://localhost:3000`.
+- Same Wi-Fi: `http://<laptop-ip>:3000` (the server prints it).
+- Phone on mobile data: `npm run tunnel` and use the `https://...trycloudflare.com` address.
+
+**Test without glasses:** turn on "Test without glasses (simulated glasses)". Meta's MockDeviceKit pairs fake Ray-Ban Meta glasses whose camera returns the photos in `android/app/src/main/assets/mock/`, matched to the current step. Or from the laptop:
+
+```bash
+adb shell am start -n com.baseacademy.glasses/.MainActivity --ez mock true \
+  --es server http://localhost:3000 --es worker "'Your Name'" --es playbook battery-install --ez newjob true --ez start true
+adb logcat -s BA-Pipeline BA-Speaker     # watch it capture and speak
+```
+
 ## Hooking up the glasses
 
 There are three ways. A is the one to trust on stage.
