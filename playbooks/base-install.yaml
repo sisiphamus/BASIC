@@ -43,9 +43,9 @@ steps:
 
   - id: qr-scan
     title: QR scan
-    say: Scan the unit's QR code to register it to this job. Tap Show serial label and hold the phone at the stack for two seconds.
+    say: Scan the unit's QR code to register it to this job. Hold the QR label on the battery steady in front of the camera for two seconds.
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
-    check: A serial or QR label is close, in focus and readable, shown on a phone or on the stack. Read the serial number and job number exactly, report them in evidence, confirm they match the job file, and repeat the serial number in coach_line.
+    check: A QR code or serial label on the battery (or shown on a phone) is close enough and in focus. The real battery's QR code is the normal case. If a serial number is printed and readable, report it exactly in evidence and repeat it in coach_line; do not require it to match the job file and never invent one. If only the QR code is readable, confirm the QR label was captured.
 
   - id: disco-off
     title: Disco off
