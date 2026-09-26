@@ -138,6 +138,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
   var callAudio by remember { mutableStateOf(Settings.voiceRoute == Settings.ROUTE_CALL) }
   var jobs by remember { mutableStateOf(listOf<Pair<String, String>>()) }
   var serverNote by remember { mutableStateOf("") }
+  var prop by remember { mutableStateOf<String?>(null) }
 
   fun save() {
     Settings.serverUrl = server
@@ -164,6 +165,11 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
 
   LaunchedEffect(Unit) { checkServer() }
 
+  when (prop) {
+    "label" -> return SerialLabel { prop = null }
+    "app" -> return InstallerApp { prop = null }
+  }
+
   Column(
       Modifier.fillMaxSize().background(Color(0xFFF7F8FA)).safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -177,6 +183,10 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
         OutlinedButton(onClick = { Pipeline.sendCommand("repeat") }, modifier = Modifier.weight(1f)) { Text("Repeat") }
         OutlinedButton(onClick = { Pipeline.sendCommand("help") }, modifier = Modifier.weight(1f)) { Text("Help") }
         OutlinedButton(onClick = { Pipeline.sendCommand("next") }, modifier = Modifier.weight(1f)) { Text("Skip") }
+      }
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { prop = "label" }, modifier = Modifier.weight(1f)) { Text("Show serial label") }
+        OutlinedButton(onClick = { prop = "app" }, modifier = Modifier.weight(1f)) { Text("Base installer app") }
       }
       if (status.needsCameraPermission) BigButton("Allow glasses camera", HiVis, onAllowCamera)
       if (!mock && status.registration != "REGISTERED") BigButton("Connect glasses (one time)", HiVis, onConnectGlasses)

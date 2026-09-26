@@ -1,4 +1,35 @@
-# Demo script (about 2 minutes)
+# Demo script: glasses-guided battery install (about 2 minutes)
+
+The untrained installer wears the glasses; the voice walks them through Base's visit-2 sequence and
+Claude checks every step from the glasses camera. Only the instructions are fixed; every confirmation
+and correction is generated from what the camera sees.
+
+## Setup
+
+- Server with Claude as the model: `MODEL_PROVIDER=claude-cli npm start` (dashboard on the laptop, projector).
+- Phone: Base Academy, job **Base battery install (visit 2)**, glasses paired, camera streaming. Pause until you're at the stack.
+- Props: the module stack, one side panel, the top panel. Everything else is on the phone:
+  **Show serial label** (for the scan) and **Base installer app** (the commissioning screen, goes Connecting → Online).
+
+## What happens
+
+1. **Stack set.** "Job BP-24-1187. Begin with the battery stack set in position, enclosure panels off…" → Claude confirms the bare stack.
+2. **Serial scan.** Tap *Show serial label*, hold the phone at the stack. → "Serial BP2-0418-7731 confirmed and registered to job BP-24-1187."
+3. **Harness.** Close-up of the stack's connector port, hand at it. → confirms the connection point.
+4. **Side panel.** Fit the side panel flush. → confirms, or tells you what's off.
+5. **Top panel.** Seat it, step back. → "The top panel is seated and the enclosure is fully closed as one finished unit."
+6. **Commission.** Tap *Base installer app*, show the screen once it reads Online. → "The installer app shows the unit Online with all commissioning checks passing…"
+7. **Closeout, front.** Six feet back, whole unit in frame. → "Front closeout photo is acceptable."
+8. **Closeout, label.** Label or BASE badge readable. → install record complete; the dashboard's proof packet has every photo.
+
+Each check takes about 5 s: hold each action for a beat. If something doesn't register, tap **Skip** (it's logged as skipped).
+
+
+---
+
+## Older script (battery-install job with tape/level props)
+
+
 
 ## Setup before you're called
 
