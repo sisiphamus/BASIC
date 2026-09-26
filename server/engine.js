@@ -267,7 +267,8 @@ export function removeRule(session, id) {
 /** When the playbook file changes, update pending/active step wording without losing progress. */
 export function refreshFromPlaybook(session, playbook) {
   const byId = new Map(playbook.steps.map((s) => [s.id, s]));
-  session.stepDefs = session.stepDefs.map((d) => (byId.has(d.id) ? { ...byId.get(d.id) } : d));
+  const overrides = session.stepOverrides || {};
+  session.stepDefs = session.stepDefs.map((d) => (byId.has(d.id) ? { ...byId.get(d.id), ...(overrides[d.id] || {}) } : d));
   session.steps.forEach((st) => {
     if (byId.has(st.id)) st.title = byId.get(st.id).title;
   });

@@ -112,11 +112,12 @@ export class Service {
       const s = this.store.get(sessionId);
       // Lines spoken in the last few seconds, so a page that connects late (or reconnects)
       // still hears the current instruction. The page skips ids it already played.
-      const since = Date.now() - 15_000;
+      // Supervisor messages are kept longer, so a crew whose glasses dropped still gets them.
+      const now = Date.now();
       const says = s
         ? this.store
             .eventsFor(sessionId)
-            .filter((e) => e.type === 'say' && e.ts >= since)
+            .filter((e) => e.type === 'say' && e.ts >= now - (e.source === 'supervisor' ? 120_000 : 15_000))
             .map((e) => ({ id: e.sayId, text: e.text, source: e.source, interrupt: false, stepId: e.stepId, ts: e.ts }))
         : [];
       return { type: 'snapshot', sessions: s ? [this.publicSession(s)] : [], says };
@@ -202,7 +203,7 @@ export class Service {
     s.updatedAt = Date.now();
     s.lastFrameAt = s.updatedAt;
     const ev = this.store.appendEvent(id, { type: 'frame', frameId, bytes: buf.length });
-    this.hub?.publish(id, { type: 'frame', sessionId: id, frameId, ts: ev.ts });
+    this.hub?.publish(id, { type: 'frame', sessionId: id, frameId, ts: ev.ts, seq: ev.seq });
     const r = this.rt(id);
     const job = { frameId, buf, mime, at: Date.now() };
     if (r.busy) {
@@ -351,6 +352,8 @@ export class Service {
       }
     }
     Object.assign(s.stepDefs[i], changes);
+    // remember per-job edits so a playbook save doesn't silently undo them
+    s.stepOverrides = { ...(s.stepOverrides || {}), [stepId]: { ...(s.stepOverrides?.[stepId] || {}), ...changes } };
     this.dispatch(s, [{ type: 'event', event: 'step.edited', stepId, changes }]);
     return this.publicSession(s);
   }

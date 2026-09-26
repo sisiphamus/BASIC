@@ -410,3 +410,38 @@ test('simulated crews never call the real model', async () => {
   await svc.idle(live.id);
   assert.equal(realCalls, 1);
 });
+
+test('a supervisor\'s edit to this job survives a playbook save', async () => {
+  const s = await newSession();
+  await api('PATCH', `/api/sessions/${s.id}/steps/clearance`, { check: 'Tape reads at least 48 inches.' });
+  const orig = (await api('GET', '/api/playbooks/battery-install')).body.source;
+  await api('PUT', '/api/playbooks/battery-install', { source: orig.replace('Level looks good.', 'Level looks great.') });
+  const d = (await api('GET', `/api/sessions/${s.id}`)).body;
+  assert.equal(d.steps[0].check, 'Tape reads at least 48 inches.');
+  await api('PUT', '/api/playbooks/battery-install', { source: orig });
+});
+
+test('live frame messages carry the event seq and time', async () => {
+  const s = await newSession();
+  const d = wsClient('role=dashboard');
+  await d.open;
+  mock.enqueue(r('unclear', 0.2));
+  await api('POST', `/api/sessions/${s.id}/frames`, JPEG);
+  const m = await d.waitFor((x) => x.type === 'frame' && x.sessionId === s.id);
+  assert.ok(m.seq > 0 && m.ts > 0 && m.frameId);
+  await srv.service.idle(s.id);
+  d.ws.close();
+});
+
+test('a crew that reconnects gets supervisor messages from the last two minutes', async () => {
+  const s = await newSession();
+  await api('POST', `/api/sessions/${s.id}/messages`, { text: 'Missed this one.' });
+  srv.store.eventsFor(s.id).filter((e) => e.type === 'say').forEach((e) => (e.ts -= 60_000)); // a minute ago
+  const g = wsClient(`role=glasses&session=${s.id}`);
+  await g.open;
+  const snap = await g.waitFor((m) => m.type === 'snapshot');
+  const texts = snap.says.map((x) => x.text);
+  assert.ok(texts.includes('Missed this one.'));
+  assert.ok(!texts.some((t) => /Measure from the battery/.test(t)), 'old step lines are not replayed');
+  g.ws.close();
+});
