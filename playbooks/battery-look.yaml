@@ -1,0 +1,56 @@
+# Walk around an installed Base battery and capture each part, so we can see what a real unit looks like.
+# Every check passes as soon as that part is clearly in view.
+
+id: battery-look
+title: Battery walkaround (photo survey)
+summary: Show the battery, its label, status light, surroundings, wiring and the wall disconnect, one at a time.
+frame_interval_ms: 2000
+
+steps:
+  - id: whole-unit
+    title: Whole battery
+    say: Stand a few steps back and look at the whole battery.
+    check: A large outdoor battery or equipment cabinet next to a house is visible, most or all of it in frame.
+    pass_say: Got the whole unit.
+    hint: Step back so the whole battery fits in view.
+
+  - id: nameplate
+    title: Label or nameplate
+    say: Now get close to the label or nameplate on the battery.
+    check: A product label, nameplate or sticker with printed text on an equipment cabinet is close enough that some text is readable.
+    pass_say: Got the label.
+    hint: Get closer to the label, about a foot away.
+
+  - id: status-light
+    title: Status light
+    say: Find the status light or display on the battery and look straight at it.
+    check: An indicator light, LED strip, logo light or small display on the equipment cabinet is clearly visible.
+    pass_say: Got the status light.
+    hint: Look for a light or logo on the front or top of the battery.
+
+  - id: surroundings
+    title: Around the battery
+    say: Look at the ground and wall around the battery, left side then right side.
+    check: The area beside or around the equipment cabinet is visible, including the ground or pad it sits on.
+    pass_say: Got the surroundings.
+    hint: Turn your head slowly to show the area around it.
+
+  - id: wiring
+    title: Wiring and conduit
+    say: Follow the cable or pipe coming out of the battery toward the house.
+    check: Electrical conduit, a pipe or cables running from equipment toward a wall are visible.
+    pass_say: Got the wiring.
+    hint: Look where the cable leaves the battery.
+
+  - id: disconnect
+    title: Wall disconnect
+    say: Now find the gray box on the house wall where the wiring goes, and look at it.
+    check: A wall-mounted electrical box, disconnect switch, meter or panel on the side of a house is visible.
+    pass_say: Got the disconnect. That's the full walkaround. Thanks.
+    hint: It is usually on the wall near the electric meter.
+
+watch:
+  - id: danger
+    when: Something looks unsafe, such as an open cabinet door with exposed wiring, smoke, scorch marks, or standing water on the equipment.
+    say: ''
+    cooldown_s: 30
