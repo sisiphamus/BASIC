@@ -42,6 +42,7 @@ data class Status(
     val session: String = "none",
     val stream: String = "none",
     val talking: Boolean = false,
+    val paused: Boolean = false,
     val needsCameraPermission: Boolean = false,
     val serverSession: String? = null,
     val job: String = "",
@@ -95,6 +96,8 @@ object Pipeline {
   private var socketTries = 0
   private var glassesPresent = false
   private var talking = false // audio window: camera stopped so the glasses can speak
+  private var paused = false // crew pressed Pause: camera off, nothing sent
+  private var socketId: String? = null
 
   fun start(context: Context) {
     if (scope != null) return
@@ -151,6 +154,27 @@ object Pipeline {
     scope?.launch { runCatching { Server.command(id, cmd) }.onFailure { fail("Command failed: ${it.message}") } }
   }
 
+  /** Pause: turn the glasses camera off and stop sending photos until [resume]. */
+  fun pause() {
+    if (paused) return
+    paused = true
+    _status.update { it.copy(paused = true) }
+    stopLoop()
+    val cam = camera
+    if (cam != null) {
+      session?.let { onCameraGone(it) }
+      runCatching { cam.stop() }
+    }
+  }
+
+  fun resume() {
+    if (!paused) return
+    paused = false
+    _status.update { it.copy(paused = false, error = "") }
+    val s = session ?: return
+    if (s.state.value == DeviceSessionState.STARTED) scope?.launch { addCamera(s) }
+  }
+
   /** Called by the activity after the Meta AI camera permission flow. */
   fun cameraPermissionGranted() {
     _status.update { it.copy(needsCameraPermission = false) }
@@ -182,7 +206,7 @@ object Pipeline {
             created.state.collect { state ->
               _status.update { it.copy(session = state.name) }
               when (state) {
-                DeviceSessionState.STARTED -> if (!talking) addCamera(created)
+                DeviceSessionState.STARTED -> if (!talking && !paused) addCamera(created)
                 DeviceSessionState.STOPPED -> onSessionStopped()
                 else -> Unit
               }
@@ -219,7 +243,7 @@ object Pipeline {
   }
 
   private suspend fun addCamera(s: DeviceSession) {
-    if (camera != null || talking) return
+    if (camera != null || talking || paused) return
     var granted = false
     Wearables.checkPermissionStatus(Permission.CAMERA)
         .onSuccess { status -> granted = status == PermissionStatus.Granted }
@@ -229,7 +253,7 @@ object Pipeline {
       fail("Open Base Academy and tap Allow glasses camera")
       return
     }
-    if (camera != null || talking) return // re-check after the suspend
+    if (camera != null || talking || paused) return // re-check after the suspend
     cameraWantedSince = SystemClock.elapsedRealtime()
     // The stream keeps the camera awake; the pictures come from capturePhoto().
     s.addCamera(StreamConfiguration(videoQuality = VideoQuality.LOW, frameRate = 2))
@@ -278,7 +302,7 @@ object Pipeline {
     } else {
       scope?.launch {
         delay(1500)
-        if (session === s && s.state.value == DeviceSessionState.STARTED && !talking) addCamera(s)
+        if (session === s && s.state.value == DeviceSessionState.STARTED && !talking && !paused) addCamera(s)
       }
     }
   }
@@ -316,7 +340,7 @@ object Pipeline {
     val s = session ?: return
     scope?.launch {
       delay(300)
-      if (!talking && session === s && s.state.value == DeviceSessionState.STARTED) addCamera(s)
+      if (!talking && !paused && session === s && s.state.value == DeviceSessionState.STARTED) addCamera(s)
     }
   }
 
@@ -326,7 +350,7 @@ object Pipeline {
       while (isActive) {
         delay(5000)
         val s = session ?: continue
-        if (talking || s.state.value != DeviceSessionState.STARTED) continue
+        if (talking || paused || s.state.value != DeviceSessionState.STARTED) continue
         val streaming = _status.value.stream == StreamState.STREAMING.name || _status.value.stream == StreamState.PAUSED.name
         val since = SystemClock.elapsedRealtime() - cameraWantedSince
         if (!streaming && since > STALL_MS) {
@@ -416,6 +440,7 @@ object Pipeline {
         Settings.sessionId = null
         fail("Job not found on the server, starting a new one")
         scope?.launch {
+          closeSocket()
           stopLoop()
           startLoop()
         }
@@ -472,7 +497,12 @@ object Pipeline {
 
   private fun openSocket(id: String) {
     socketWanted = true
-    if (socket != null) return
+    if (socket != null && socketId == id) return
+    if (socket != null) {
+      socket?.close(1000, "new job")
+      socket = null
+    }
+    socketId = id
     _status.update { it.copy(socket = "connecting") }
     socket =
         Server.socket(
@@ -511,6 +541,7 @@ object Pipeline {
     socketWanted = false
     socket?.close(1000, "bye")
     socket = null
+    socketId = null
     _status.update { it.copy(socket = "off") }
   }
 

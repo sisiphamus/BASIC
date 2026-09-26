@@ -23,7 +23,9 @@ glasses (phone): https://192.168.1.162:3443/glasses
 - **Dashboard**: open on the laptop.
 - **Glasses page**: open on the phone. The phone and laptop need to be on the same Wi-Fi. The first time, the phone shows a certificate warning (the certificate is self-made). Tap "Show details / Advanced" and "visit this website". Phones only allow the camera on https pages, which is why this is needed.
 
-No key? The server runs a built-in walkthrough model that fakes believable results (step 1 fails once, then everything passes). Use it to rehearse. With `GEMINI_API_KEY` set, Gemini judges every frame for real. The server asks Google which models your key can use and picks the newest regular `flash` model. Set `GEMINI_MODEL` to force one.
+**No Gemini key? Use Claude.** `MODEL_PROVIDER=claude-cli npm start` sends each photo to the `claude` command-line tool (Claude Code) on this laptop, using whatever account it's logged into: Sonnet, low effort, no tools, no hooks or MCP servers. On real glasses photos it took about 3.8 s per check and cost about $0.013 per photo against that account. Change the model or effort with `BA_CLAUDE_MODEL` and `BA_CLAUDE_EFFORT`.
+
+No key at all? The server runs a built-in walkthrough model that fakes believable results (step 1 fails once, then everything passes). Use it to rehearse. With `GEMINI_API_KEY` set, Gemini judges every frame for real. The server asks Google which models your key can use and picks the newest regular `flash` model. Set `GEMINI_MODEL` to force one.
 
 ## Morning checklist (10 minutes)
 
@@ -64,7 +66,7 @@ No key? The server runs a built-in walkthrough model that fakes believable resul
    ```
 3. Open **Base Academy** on the phone. Enter your name and the server address, then tap **Connect glasses (one time)**. That hops to Meta AI to approve and comes back. Then tap **Start**, and **Allow glasses camera** if it asks.
 
-**Why photos pause while the glasses talk.** While the glasses camera is streaming, the glasses mute normal media audio (Meta DAT issue #78). So by default the app stops the camera, speaks, and restarts it; photos resume about a second after the line ends. If voice still doesn't come through on your glasses, turn on "Keep camera on while talking (phone-call audio)". That speaks over the Bluetooth call channel instead (lower quality; some phones drop the camera). Photos taken during a stream come back at about 1080×1440; the app shows the real size and capture time on screen.
+**How the voice reaches the glasses.** While the glasses camera is streaming, the glasses mute normal media audio (Meta DAT issue #78). So by default the app speaks over the Bluetooth **call** channel, which keeps working during the stream. Tested on a Galaxy S24 with Ray-Ban Meta: clear, and a check every ~4 s. If you can't hear anything on another phone, turn off "Talk over phone-call audio": the app then stops the camera while it speaks and restarts it after, which works everywhere but adds several seconds per spoken line. Photos taken during a stream come back at 1080×1440 (measured: ~220 KB, ~1.3 s per capture). The app shows the real size and timing on screen, and **Pause** turns the camera off until you resume.
 
 **Server address from the phone**
 

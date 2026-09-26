@@ -106,6 +106,8 @@ class MainActivity : ComponentActivity() {
       if (Pipeline.status.value.running) Pipeline.newJob()
     }
     if (x.getBoolean("stop", false)) GlassesService.stop(this)
+    if (x.getBoolean("pause", false)) Pipeline.pause()
+    if (x.getBoolean("resume", false)) Pipeline.resume()
     if (x.getBoolean("start", false)) pendingStart = true
     maybeAutoStart()
   }
@@ -170,6 +172,7 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
 
     if (status.running) {
       Live(status)
+      if (status.paused) BigButton("Resume", HiVis) { Pipeline.resume() } else BigButton("Pause", Color.White) { Pipeline.pause() }
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         OutlinedButton(onClick = { Pipeline.sendCommand("repeat") }, modifier = Modifier.weight(1f)) { Text("Repeat") }
         OutlinedButton(onClick = { Pipeline.sendCommand("help") }, modifier = Modifier.weight(1f)) { Text("Help") }
@@ -200,8 +203,8 @@ private fun Screen(onConnectGlasses: () -> Unit, onAllowCamera: () -> Unit) {
     }
     Toggle("Start automatically when the app opens", autoStart) { autoStart = it }
     Toggle("Test without glasses (simulated glasses)", mock) { mock = it }
-    Toggle("Keep camera on while talking (phone-call audio)", callAudio) { callAudio = it }
-    Text("Off (recommended): the camera pauses for a moment while the glasses talk, because the glasses mute normal audio during camera use. Turn on only if voice doesn't come through.", fontSize = 13.sp, color = Color(0xFF555B66))
+    Toggle("Talk over phone-call audio (camera stays on)", callAudio) { callAudio = it }
+    Text("On (recommended): faster checks. Turn off only if you can't hear the glasses; then the camera pauses briefly each time they talk.", fontSize = 13.sp, color = Color(0xFF555B66))
     if (!mock && status.registration != "REGISTERED") BigButton("Connect glasses (one time)", Color.White, onConnectGlasses)
     BigButton("Start", HiVis) {
       save()
@@ -216,6 +219,7 @@ private fun Live(s: Status) {
       Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(12.dp)).padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(6.dp),
   ) {
+    if (s.paused) Text("Paused. Camera off, nothing is being sent.", color = Fail, fontWeight = FontWeight.Bold)
     Line("Glasses", if (s.glasses) "connected" else "waiting for glasses", s.glasses)
     Line("Camera", s.stream.lowercase().replace('_', ' '), s.stream == "STREAMING")
     Line("Server", if (s.serverSession != null) "job running, voice ${s.socket}" else "not started", s.serverSession != null && s.socket == "live")

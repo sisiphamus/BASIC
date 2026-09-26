@@ -16,6 +16,7 @@ import { Service } from './service.js';
 import { Store } from './store.js';
 import { GeminiProvider } from './providers/gemini.js';
 import { MockProvider } from './providers/mock.js';
+import { ClaudeCliProvider } from './providers/claude-cli.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -56,6 +57,7 @@ export async function loadCert(dir) {
 
 export function chooseProvider(env = process.env) {
   const want = (env.MODEL_PROVIDER || '').toLowerCase();
+  if (want === 'claude-cli' || want === 'claude') return new ClaudeCliProvider();
   if (want === 'mock' || (!want && !env.GEMINI_API_KEY)) return new MockProvider({ delayMs: Number(env.MOCK_DELAY_MS ?? 700) });
   return new GeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL });
 }
