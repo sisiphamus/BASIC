@@ -61,6 +61,18 @@ steps:
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
     check: The Base spec label or its QR code is visible on the battery (the QR is small; it does NOT need to be readable, and no hand or pointing gesture is required). A visible label with its QR corner in frame counts as scanned. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
 
+  - id: gray-cap
+    title: Gray cap
+    say: Set the gray cap on top of the stack. Press down so it seats.
+    why: The gray cap closes the top of the module stack and gives the shell something to sit on.
+    check: A gray cap or cover is set on top of the battery module stack, sitting flat, with the tech's hand placing it or pressing on it (a clearly seated gray cap alone also counts).
+
+  - id: metal-shell
+    title: Metal shell
+    say: Lower the metal shell over the gray cap until it sits flush.
+    why: The metal shell covers the stack and cap and is the outer housing of the unit.
+    check: A metal shell or housing has been lowered over the gray cap on the battery stack and is sitting flush, or the tech is clearly lowering it into place.
+
   - id: disco-off
     title: Disco off
     say: Open the installer app and drag the Disco switch down to OFF.
