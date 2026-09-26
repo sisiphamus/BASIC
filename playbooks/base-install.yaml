@@ -23,7 +23,10 @@ context: >-
   (set the top shell, press its edge, show a corner): judge only that stand-in action, and in
   coach_line briefly confirm it and tie it back to the real step (for example "Top shell is flat.
   That is how the inverter must seat.").
-  Keep every spoken line to ONE short sentence, about 12 words or fewer. One instruction at a time. Serial labels and app screens are
+  Keep every spoken line to ONE short sentence, about 12 words or fewer. One instruction at a time.
+  Every step ends with a hand signal to the camera (pointing at a spot, a hand placed on a part, or a
+  thumbs up). When the part of the step is done but the signal is missing, ask for the signal in
+  coach_line ("Good. Give me a thumbs up when it is flush."); when the signal is there, pass. Serial labels and app screens are
   shown on a phone screen. Speak like a senior Base field supervisor coaching a new installer:
   formal, precise, calm, technical vocabulary (module stack, Disco, inverter, bus bar, harness,
   D2I, side panels, top panel, commissioning, grid test, islanding, backup, closeout). No slang, no
@@ -48,45 +51,51 @@ job:
 steps:
   - id: stack-set
     title: Stack set
-    say: Set the module stack on flat ground, labels facing you. Then step back.
+    say: Set the module stack on flat ground, labels facing you. Then give me a thumbs up.
     why: The stack sits on its integrated base and must be upright and fully seated before any connection is made.
-    check: A Base battery module stack is visible, upright and set down on the ground or floor, most of it in frame, with no side panels installed yet.
+    check: A Base battery module stack is visible, upright on the ground or floor, and the tech gives a thumbs up (the stack alone also counts if it is clearly set and in full view).
 
   - id: qr-scan
     title: QR scan
-    say: Scan the unit. Hold the QR corner of the Base label up to the glasses.
+    say: Scan the unit. Point at the QR code on the Base label.
     why: The scan ties this serial number to this customer and this job. It is the record of what was installed where.
-    check: A QR code or serial label is visible on the battery or on a phone held at it. It does NOT need to be readable, the QR code is small; a clearly visible QR label in frame counts as scanned. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
+    check: A QR code or serial label on the battery is visible, with the tech pointing at it or holding it close. It does NOT need to be readable, the QR code is small. If a serial number happens to be readable, report it exactly and repeat it in coach_line; never invent one.
 
   - id: disco-off
     title: Disco off
     say: Confirm the Disco is off. Show me the pre-check screen in the installer app.
     why: The Disco isolates the battery from the home and the grid. Every connection at the battery is made with it off.
-    check: Either the Base installer app pre-check screen showing the Disconnect or Disco as OFF, or a disconnect switch handle clearly in the OFF position.
+    check: Either the Base installer app pre-check screen showing the Disco OFF, or a disconnect switch handle clearly in the OFF position.
 
   - id: inverter
-    title: Inverter
-    say: The inverter would seat on the top plate. Today, set the top shell on the stack.
+    title: Inverter mount
+    say: The inverter seats on the top plate. Point to the mounting studs on top.
     why: In a real install, the inverter seats on the four round mounting studs on the top plate and must sit flat before anything is connected.
-    check: The white top shell (top panel) has been set on top of the battery stack and is sitting flat, or the tech is placing it there.
+    check: The top plate of the battery stack is in view and the tech is pointing at or touching its round mounting studs.
 
   - id: bus-harness
     title: Bus bar and harness
-    say: Press down on the front edge of the top shell. It should not rock.
+    say: Now the bus bar and harness. Put your hand on the connection point.
     why: The bus bar carries battery current from the modules to the inverter; the harness carries its control signals. Both must be fully seated and latched.
-    check: The tech's hand is pressing on or running along the front edge of the top shell on the battery stack, and the shell is sitting flat.
+    check: A close-up of the stack's connection area (a connector, port, terminal or cable end on the module stack) with the tech's hand on it or pointing right at it.
 
   - id: d2i-prep
-    title: D2I prep
-    say: Show me the back corner where the D2I cable would exit.
+    title: D2I exit
+    say: Point to the back corner where the D2I cable exits.
     why: The D2I carries power out to the Disco. Its cap stays on until routing so the pins stay clean.
-    check: A corner or back edge of the battery stack, with the top shell on it, is shown up close, or the tech is pointing at where a cable would exit.
+    check: A corner or back edge of the battery stack is in view and the tech is pointing at it or has a hand on it.
 
-  - id: panels
-    title: Panels and D2I routing
-    say: Step back. Show me the whole unit with the top shell on.
-    why: In a real install, the four side panels go on first and the top panel locks them in place, with the D2I routed through the panel opening.
-    check: The whole battery stack with the white top shell seated on it is in view, shown as one assembled unit.
+  - id: side-panel
+    title: Side panel
+    say: Fit the side panel against the stack. Thumbs up when it is flush.
+    why: The side panels are the weather and touch barrier. The D2I must exit through the panel opening, not pinched under a panel.
+    check: A white side panel is fitted or held flush against a side of the battery stack, and the tech gives a thumbs up (a clearly flush panel alone also counts).
+
+  - id: top-shell
+    title: Top shell
+    say: Set the top shell on the stack. Then press down on its front edge.
+    why: The top panel locks the side panels in place and closes the enclosure. It must sit flat, without rocking.
+    check: The white top shell is seated on top of the battery stack and the tech's hand is pressing on it or resting on it.
 
   - id: commission
     title: Commissioning
@@ -108,9 +117,9 @@ steps:
 
   - id: closeout
     title: Closeout photo
-    say: Closeout photo. Step back about six feet, unit centered.
+    say: Closeout photo. Step back about six feet, unit centered, then thumbs up.
     why: The closeout photo is the permanent record of the finished install for the customer file and the inspector.
-    check: The assembled battery (stack with side and top panel) is shown from the front, fully in frame, reasonably level and in focus.
+    check: The assembled battery (stack with its panels) is shown from the front, fully in frame and in focus (a thumbs up in view is welcome but not required).
 
 watch:
   - id: hands-in-live-enclosure
