@@ -1,4 +1,4 @@
-// Renders docs/assets/title-card.html to the README's title card PNG (2x, 2560×960).
+// Renders docs/assets/title-card.html to the README's title card PNG (docs/assets/basic-title.png) (2x, 2560×960).
 //   node scripts/render-title-card.js
 import { chromium } from 'playwright-core';
 import path from 'node:path';
@@ -12,5 +12,5 @@ await page.goto(pathToFileURL(path.join(dir, 'title-card.html')).href);
 await page.evaluate(() => document.fonts.ready);
 const fonts = await page.evaluate(() => [...document.fonts].map((f) => `${f.family} ${f.weight}: ${f.status}`));
 console.log(fonts.join('\n'));
-await page.screenshot({ path: path.join(dir, 'title-card.png') });
+await page.screenshot({ path: path.join(dir, 'basic-title.png') });
 await browser.close();

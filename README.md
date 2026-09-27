@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/title-card.png" alt="BASIC: smart glasses that teach you to install a home battery" width="100%"></p>
+<p align="center"><img src="docs/assets/basic-title.png" alt="BASIC: smart glasses that teach you to install a home battery" width="100%"></p>
 
 BASIC coaches a battery installer through Meta Ray-Ban glasses. Every two seconds the glasses camera sends a photo to Claude, which checks it against the current step of the job. A voice in the glasses confirms the step, corrects it or gives the next one. A master electrician watches every crew from one dashboard and can talk into anyone's glasses by typing.
 
