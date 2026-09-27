@@ -44,7 +44,7 @@ export async function loadCert(dir) {
     covered = [];
   }
   if (fs.existsSync(keyPath) && fs.existsSync(certPath) && ips.every((ip) => covered.includes(ip))) return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
-  const attrs = [{ name: 'commonName', value: 'base-academy.local' }];
+  const attrs = [{ name: 'commonName', value: 'basic.local' }];
   const pems = await selfsigned.generate(attrs, {
     notAfterDate: new Date(Date.now() + 800 * 24 * 3600 * 1000),
     keySize: 2048,

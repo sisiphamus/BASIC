@@ -28,6 +28,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "BaseAcademyGlasses"
+rootProject.name = "BASIC"
 
 include(":app")

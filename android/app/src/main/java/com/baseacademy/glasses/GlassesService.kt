@@ -37,7 +37,7 @@ class GlassesService : Service() {
     if (wakeLock == null) {
       wakeLock =
           (getSystemService(Context.POWER_SERVICE) as PowerManager)
-              .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "BaseAcademy::Glasses")
+              .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "BASIC::Glasses")
               .apply { acquire(4 * 60 * 60 * 1000L) }
     }
     Pipeline.start(this)

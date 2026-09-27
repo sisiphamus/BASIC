@@ -47,3 +47,4 @@ All images from Wikimedia Commons, resized to max 960px wide JPEG. Licenses as l
 ## Generated for this project
 
 - `battery-install/05-online-c-base-app-online.jpg`, `service-visit/01-read-fault-c-base-app-fault.jpg`, `service-visit/05-online-c-base-app-online.jpg`: mock app status screens drawn with ffmpeg for the demo (not real Base Power app screenshots). Show them full-screen on a spare phone as the "app" prop.
+- `serial-label.jpg`: a fictional Base spec label (serial BP2-0418-7731, job BP-24-1187) with a QR code, made for this project. Not a real Base label.
