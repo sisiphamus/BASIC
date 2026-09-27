@@ -1,31 +1,38 @@
-# Demo script: glasses-guided battery install (about 2 minutes)
+# Demo script: glasses-guided battery install
 
-The untrained installer wears the glasses; the voice walks them through Base's visit-2 sequence and
-Claude checks every step from the glasses camera. Only the instructions are fixed; every confirmation
-and correction is generated from what the camera sees.
+An installer with no training wears the glasses. The voice walks them through Base's visit-2 install
+in build order, and Claude checks every step from the glasses camera. Only the instructions are
+written in advance. Every confirmation and correction is written from what the camera sees.
 
 ## Setup
 
-- Server with Claude as the model: `MODEL_PROVIDER=claude-cli npm start` (dashboard on the laptop, projector).
-- Phone: BASIC, job **Base battery install (visit 2)**, glasses paired, camera streaming. Pause until you're at the stack.
-- Props: the module stack, one side panel, the top panel. Everything else is on the phone:
-  **Show serial label** (for the scan) and **Base installer app** (the commissioning screen, goes Connecting → Online).
+- Server: `MODEL_PROVIDER=claude-cli npm start`. Dashboard on the projector at `http://localhost:3000`.
+- Telemetry for the judges: `npm run console` in one terminal, `npm run frames` (kitty) in another.
+- Phone: open BASIC, job **Base battery install (visit 2)**, glasses on, camera streaming. Keep it
+  paused until you're standing at the stack. Over USB, run `adb reverse tcp:3000 tcp:3000` and use
+  `http://localhost:3000` as the server.
+- Props: the module stack, the dark gray top and the metal shell. The Disco, commissioning and grid
+  test happen on the phone under **Base installer app**.
 
-## What happens
+## The run (12 steps, about 5 s per check)
 
-1. **Stack set.** "Job BP-24-1187. Begin with the battery stack set in position, enclosure panels off…" → Claude confirms the bare stack.
-2. **Serial scan.** Tap *Show serial label*, hold the phone at the stack. → "Serial BP2-0418-7731 confirmed and registered to job BP-24-1187."
-3. **Harness.** Close-up of the stack's connector port, hand at it. → confirms the connection point.
-4. **Side panel.** Fit the side panel flush. → confirms, or tells you what's off.
-5. **Top panel.** Seat it, step back. → "The top panel is seated and the enclosure is fully closed as one finished unit."
-6. **Commission.** Tap *Base installer app*, show the screen once it reads Online. → "The installer app shows the unit Online with all commissioning checks passing…"
-7. **Closeout, front.** Six feet back, whole unit in frame. → "Front closeout photo is acceptable."
-8. **Closeout, label.** Label or BASE badge readable. → install record complete; the dashboard's proof packet has every photo.
+| # | The glasses say | What you do |
+|---|---|---|
+| 1 | Set the module stack on flat ground, labels facing you. Then give me a thumbs up. | Stack in view, thumbs up |
+| 2 | Scan the unit. Look at the QR code on the Base label. | Look at the label |
+| 3 | Look at the top plate. Point to the four mounting studs. | Point at the studs |
+| 4 | Set the gray top on the studs. Press down so it seats. | Place the gray top, press down |
+| 5 | Before any connection, open the installer app and drag the Disco switch to OFF. | Swipe the Disco lever in the app, show the screen |
+| 6 | Point to the connection point on the gray top. | Point at the gray top |
+| 7 | Point to the back corner where the D2I cable exits. | Point at the back corner |
+| 8 | Lower the metal shell over the gray top until it sits flush. | Shell on, hand on it, thumbs up |
+| 9 | Open the installer app and press Start commissioning. Show me when it reads Online. | Tap Start commissioning, show Online |
+| 10 | Grid test. In the installer app, drag the grid breaker down to OFF. | Swipe the breaker off |
+| 11 | Hold on that screen until it says passed. Then drag the breaker back ON. | Show Passed, swipe it back on |
+| 12 | Closeout photo. Step back about six feet, unit centered, then thumbs up. | Step back, thumbs up |
 
-Each check takes about 5 s: hold each action for a beat. If something doesn't register, tap **Skip** (it's logged as skipped).
-
-
----
+Hold each action for a beat. If a step won't register, tap **Skip** on the phone (it's logged as
+skipped), or approve it from the dashboard.
 
 ## Older script (battery-install job with tape/level props)
 
